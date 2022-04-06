@@ -28,6 +28,9 @@
 #include <limits.h>
 #include <unistd.h>
 #include <signal.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 
 #include <framework/mlt.h>
 
@@ -35,9 +38,12 @@
 #include <SDL.h>
 #endif
 
-/* #include "io.h" */
+#include "io.h"
+#include "JitControl.pb-c.h"
+#include "JitStatus.pb-c.h"
 
 static mlt_producer melt = NULL;
+static JitStatus jit_status = JIT_STATUS__INIT;
 
 static void stop_handler(int signum)
 {
@@ -72,6 +78,57 @@ static void transport_action( mlt_producer producer, char *value )
 
 	mlt_properties_set_int( properties, "stats_off", 1 );
 
+	JitControl *const jit_control = (JitControl*) value;
+	FILE *f = fopen("/tmp/moff.log", "a");
+	switch (jit_control->type) {
+		case CONTROL_TYPE__PAUSE:
+			fprintf(f, "pause\n");
+
+			mlt_producer_set_speed( producer, 0 );
+			mlt_consumer_purge( consumer );
+			if (jit_status.playing) {
+				mlt_producer_seek( producer, mlt_consumer_position( consumer ) + 1 );
+			}
+			mlt_events_fire( jack, "jack-stop", mlt_event_data_none() );
+			jit_status.playing = 0;
+			break;
+		case CONTROL_TYPE__PLAY:
+			fprintf(f, "play\n");
+
+			if ( !jack || mlt_producer_get_speed( producer ) != 0 ) {
+				mlt_producer_set_speed( producer, jit_control->play_rate );
+			}
+			mlt_consumer_purge( consumer );
+			mlt_events_fire( jack, "jack-start", mlt_event_data_none() );
+			jit_status.playing = 1;
+			break;
+
+		case CONTROL_TYPE__PLAY_RATE:
+			fprintf(f, "play rate %d\n", jit_control->play_rate);
+			mlt_producer_set_speed( producer, jit_control->play_rate );
+			break;
+
+		case CONTROL_TYPE__SEEK:
+			fprintf(f, "seek: %d\n", (int) jit_control->seek_position);
+
+			mlt_consumer_purge( consumer );
+			mlt_producer_seek( producer, jit_control->seek_position);
+			fire_jack_seek_event(jack, jit_control->seek_position);
+			break;
+		case CONTROL_TYPE__QUIT:
+			fprintf(f, "quit\n");
+
+			mlt_properties_set_int( properties, "done", 1 );
+			mlt_events_fire( jack, "jack-stop", mlt_event_data_none() );
+			break;
+		default:
+			fprintf(f, "argh!\n");
+			break;
+	}
+	fclose(f);
+	mlt_properties_set_int( MLT_CONSUMER_PROPERTIES( consumer ), "refresh", 1 );
+
+	/*
 	if ( strlen( value ) == 1 )
 	{
 		switch( value[ 0 ] )
@@ -272,7 +329,7 @@ static void transport_action( mlt_producer producer, char *value )
 		}
 
 		mlt_properties_set_int( MLT_CONSUMER_PROPERTIES( consumer ), "refresh", 1 );
-	}
+	} */
 
 	mlt_properties_set_int( properties, "stats_off", 0 );
 }
@@ -356,8 +413,9 @@ static int load_consumer( mlt_consumer *consumer, mlt_profile profile, int argc,
 			qglsl = 1;
 #if SDL_MAJOR_VERSION == 2
 		if ( !strcmp("sdl", argv[i]) || !strcmp("sdl_audio", argv[i]) || !strcmp("sdl_preview", argv[i]) || !strcmp("sdl_still", argv[i]) ) {
+			/*
 			fprintf(stderr, 
-"Error: This program was linked against SDL2, which is incompatible with\nSDL1 consumers. Aborting.\n");
+"Error: This program was linked against SDL2, which is incompatible with\nSDL1 consumers. Aborting.\n");*/
 			return EXIT_FAILURE;
 		}
 #endif
@@ -471,6 +529,68 @@ static void event_handling( mlt_producer producer, mlt_consumer consumer )
 
 #endif
 
+static JitControl *read_control() {
+	static char *buf = NULL;
+	static int buf_len = 0;
+
+	int len;
+	if (read(STDIN_FILENO, &len, 4) != 4) {
+		exit(3);
+	}
+	if (buf_len < len) {
+		buf = realloc(buf, len);
+		if (!buf) {
+			exit(4);
+		}
+		buf_len = len;
+	}
+
+	for (int i = 0; i < len; ) {
+		const int r = read(STDIN_FILENO, buf + i, len - i);
+		if (r < 1) {
+			exit(5);
+		}
+		i += r;
+	}
+	return jit_control__unpack(NULL, len, buf);
+}
+
+static void write_status(JitStatus *const jit_status) {
+    static char *buf = NULL;
+    static int buf_len = 0;
+	static int fd = -1;
+
+	if (fd < 0) {
+		fd = open("/tmp/jit-status", O_WRONLY);
+	}
+
+    int len = jit_status__get_packed_size(jit_status) + 4;
+	if (len < 5) {
+		FILE *f = fopen("/tmp/moff.log", "a");
+		fprintf(f, "Vafan? %d\n", len);
+		fclose(f);
+	}
+    if (buf_len < len) {
+        buf = realloc(buf, len);
+        if (!buf) {
+            exit(1);
+        }
+        buf_len = len;
+    }
+
+    char *b = buf;
+    jit_status__pack(jit_status, b + 4);
+    *((int*) b) = len - 4;
+    while (len) {
+        const int w = write(fd, b, len);
+        if (w < 1) {
+            exit(2);
+        }
+        b += w;
+        len -= w;
+    }
+}
+
 static void transport( mlt_producer producer, mlt_consumer consumer )
 {
 	mlt_properties properties = MLT_PRODUCER_PROPERTIES( producer );
@@ -480,6 +600,9 @@ static void transport( mlt_producer producer, mlt_consumer consumer )
 	struct timespec tm = { 0, 40000000 };
 	int total_length = mlt_producer_get_playtime( producer );
 	int last_position = 0;
+    fd_set set;
+    struct timeval timeout;
+    int sel;
 
 	if ( mlt_properties_get_int( properties, "done" ) == 0 && !mlt_consumer_is_stopped( consumer ) )
 	{
@@ -487,7 +610,7 @@ static void transport( mlt_producer producer, mlt_consumer consumer )
 		{
 			if ( !is_getc )
 				term_init( );
-
+/*
 			fprintf( stderr, "+-----+ +-----+ +-----+ +-----+ +-----+ +-----+ +-----+ +-----+ +-----+\n" );
 			fprintf( stderr, "|1=-10| |2= -5| |3= -2| |4= -1| |5=  0| |6=  1| |7=  2| |8=  5| |9= 10|\n" );
 			fprintf( stderr, "+-----+ +-----+ +-----+ +-----+ +-----+ +-----+ +-----+ +-----+ +-----+\n" );
@@ -498,10 +621,34 @@ static void transport( mlt_producer producer, mlt_consumer consumer )
 			fprintf( stderr, "|           g = start of clip, j = next clip, k = previous clip       |\n" );
 			fprintf( stderr, "|                0 = restart, q = quit, space = play                  |\n" );
 			fprintf( stderr, "+---------------------------------------------------------------------+\n" );
+*/
 		}
 
 		while( mlt_properties_get_int( properties, "done" ) == 0 && !mlt_consumer_is_stopped( consumer ) )
 		{
+
+            //char string[2] = {0, 0};
+            FD_ZERO(&set);
+            FD_SET(STDIN_FILENO, &set);
+            timeout.tv_sec = 1;
+            timeout.tv_usec = 0;
+            if (select(STDIN_FILENO + 1, &set, NULL, NULL, &timeout) > 0) {
+				/*
+                    if (read(STDIN_FILENO, string, 1) != 1) {
+                        string[0] = 'q';
+                    }
+                    if (string[0] >= '!') {
+                        transport_action( producer, string );
+                    }
+					*/
+				JitControl *const jit_control = read_control();
+				if (jit_control) {
+					transport_action( producer, (char*) jit_control );
+					jit_control__free_unpacked(jit_control, NULL);
+				}
+            }
+
+        /*
 			char string[2] = {0, 0};
 			int value = ( silent || progress || is_getc )? -1 : term_read( );
 			if ( is_getc )
@@ -521,6 +668,8 @@ static void transport( mlt_producer producer, mlt_consumer consumer )
 				string[0] = value;
 				transport_action( producer, string );
 			}
+            */
+            
 
 #if defined(SDL_MAJOR_VERSION)
 			event_handling( producer, consumer );
@@ -528,6 +677,7 @@ static void transport( mlt_producer producer, mlt_consumer consumer )
 
 			if ( !silent && mlt_properties_get_int( properties, "stats_off" ) == 0 )
 			{
+                /*
 				if ( progress )
 				{
 					int current_position = mlt_producer_position( producer );
@@ -544,14 +694,23 @@ static void transport( mlt_producer producer, mlt_consumer consumer )
 					fprintf( stderr, "Current Position: %10d\r", (int)mlt_consumer_position( consumer ) );
 				}
 				fflush( stderr );
+                */
+                // MOFF
+				jit_status.duration = mlt_producer_get_length(producer);
+				jit_status.frame_rate = mlt_producer_get_fps(producer);
+				jit_status.play_rate = mlt_producer_get_speed(producer);
+				jit_status.position = mlt_producer_position(producer);
+
+                write_status(&jit_status);
+                last_position = jit_status.position;
 			}
 
-			if ( silent || progress )
-				nanosleep( &tm, NULL );
+			//if ( silent || progress )
+				//nanosleep( &tm, NULL );
 		}
 
-		if ( !silent )
-			fprintf( stderr, "\n" );
+		//if ( !silent )
+			//fprintf( stderr, "\n" );
 	}
 }
 
@@ -815,6 +974,22 @@ static void set_preview_scale(mlt_profile *profile, mlt_profile *backup_profile,
 	}
 }
 
+static mlt_producer find_producer_avformat(mlt_producer p) {
+
+	mlt_tractor tractor = (mlt_tractor) p;
+	mlt_multitrack multitrack = mlt_tractor_multitrack(tractor);
+	mlt_playlist playlist = (mlt_playlist) mlt_multitrack_track(multitrack, 0);
+	mlt_producer clip = mlt_playlist_get_clip(playlist, 0);
+	return mlt_properties_get_data(MLT_PRODUCER_PROPERTIES(mlt_playlist_get_clip(playlist, 0)), "_cut_parent", NULL);
+}
+
+static void dump_properties(mlt_properties p) {
+	for (int i = 0; i < mlt_properties_count(p); i++) {
+		char *name = mlt_properties_get_name(p, i);
+		printf("%s\n", name);
+	}
+}
+
 int main( int argc, char **argv )
 {
 	int i;
@@ -1049,7 +1224,49 @@ query_all:
 		if ( store == NULL && consumer == NULL )
 			consumer = create_consumer( profile, NULL );
 	}
-	
+
+	// video plays automatically
+	jit_status.playing = 1;
+
+	// media info
+	mlt_producer av = find_producer_avformat(melt);
+	jit_status.media_info = calloc(1, sizeof (MediaInfo));
+	media_info__init(jit_status.media_info);
+	jit_status.media_info->n_streams = mlt_properties_get_int(MLT_PRODUCER_PROPERTIES(av), "meta.media.nb_streams");
+	jit_status.media_info->streams = calloc(jit_status.media_info->n_streams, sizeof (Stream*));
+	for (int i = 0; i < jit_status.media_info->n_streams; i++) {
+		Stream *s = calloc(sizeof (Stream), 1);
+		stream__init(s);
+		jit_status.media_info->streams[i] = s;
+		s->type = STREAM_TYPE__UNKNOWN;
+		char key[100];
+		sprintf(key, "meta.media.%d.stream.type", i);
+		char *value = mlt_properties_get(MLT_PRODUCER_PROPERTIES(av), key);
+		if (!value) {
+			continue;
+		} else if (!strcmp(value, "audio")) {
+			s->type = STREAM_TYPE__AUDIO;
+			s->audio = calloc(1, sizeof (AudioStream));
+			audio_stream__init(s->audio);
+			sprintf(key, "meta.media.%d.codec.channels", i);
+			s->audio->channels = mlt_properties_get_int(MLT_PRODUCER_PROPERTIES(av), key);
+			jit_status.total_channels += s->audio->channels;
+			sprintf(key, "meta.attr.%d.stream.language.markup", i);
+			value = mlt_properties_get(MLT_PRODUCER_PROPERTIES(av), key);
+			if (value) {
+				//int l = strlen(value);
+				//s->audio->language.len = l;
+				//s->audio->language.data = calloc(1, l + 1);
+				s->audio->language = strdup(value);
+				//strcpy(s->audio->language.data, value);
+			}
+		} else if (!strcmp(value, "video")) {
+			s->type = STREAM_TYPE__VIDEO;
+		}
+	}
+	//dump_properties(av);
+	//exit(1);
+
 	// Set transport properties on consumer and produder
 	if ( consumer != NULL && melt != NULL )
 	{
@@ -1140,7 +1357,7 @@ query_all:
 		}
 		else if ( store != NULL && store != stdout && name != NULL )
 		{
-			fprintf( stderr, "Project saved as %s.\n", name );
+			//fprintf( stderr, "Project saved as %s.\n", name );
 			fclose( store );
 		}
 	}

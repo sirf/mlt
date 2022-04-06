@@ -1,0 +1,36 @@
+syntax = "proto3";
+
+message JitStatus {
+    int64 duration = 1;
+    double frame_rate = 2;
+    bool playing = 3;
+    int32 play_rate = 4;
+    int64 position = 5;
+    int32 total_channels = 6;
+    MediaInfo media_info = 7;
+}
+
+message MediaInfo {
+    repeated Stream streams = 1;
+}
+
+message Stream {
+    StreamType type = 1;
+    AudioStream audio = 2;
+    VideoStream video = 3;
+}
+
+message AudioStream {
+    int32 channels = 1;
+    string language = 2;
+}
+
+message VideoStream {
+    double frame_rate = 1;
+}
+
+enum StreamType {
+    UNKNOWN = 0;
+    AUDIO = 1;
+    VIDEO = 2;
+}
