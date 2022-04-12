@@ -549,13 +549,15 @@ static void write_status(JitStatus *const jit_status) {
 	static int fd = -1;
 
 	if (fd < 0) {
-		printf("Opening status pipe\n");
+		fprintf(stdout, "Opening status pipe\n");
+		fflush(stdout);
 		fd = open("/tmp/jit-status", O_WRONLY);
 		if (fd < 0) {
 			perror("open");
 			exit(2);
 		}
-		printf("Status pipe opened\n");
+		fprintf(stdout, "Status pipe opened\n");
+		fflush(stdout);
 	}
 
     int len = jit_status__get_packed_size(jit_status) + 4;
@@ -1001,6 +1003,9 @@ int main( int argc, char **argv )
 	signal( SIGSEGV, abnormal_exit_handler );
 	signal( SIGILL, abnormal_exit_handler );
 	signal( SIGABRT, abnormal_exit_handler );
+
+	fprintf(stdout, "Melt starting\n");
+	fflush(stdout);
 
 	for ( i = 1; i < argc; i ++ )
 	{
