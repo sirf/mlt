@@ -769,7 +769,7 @@ static int open_audio( mlt_properties properties, AVFormatContext *oc, AVStream 
 	// Process properties as AVOptions on the AVCodec
 	if ( codec && codec->priv_class )
 	{
-		char *apre = mlt_properties_get( properties, "apre" );
+		/*char *apre = mlt_properties_get( properties, "apre" );
 		if ( !c->priv_data && codec->priv_data_size )
 		{
 			c->priv_data = av_mallocz( codec->priv_data_size );
@@ -782,7 +782,7 @@ static int open_audio( mlt_properties properties, AVFormatContext *oc, AVStream 
 			apply_properties( c->priv_data, p, AV_OPT_FLAG_AUDIO_PARAM | AV_OPT_FLAG_ENCODING_PARAM );
 			mlt_properties_close( p );
 		}
-		apply_properties( c->priv_data, properties, AV_OPT_FLAG_AUDIO_PARAM | AV_OPT_FLAG_ENCODING_PARAM );
+		apply_properties( c->priv_data, properties, AV_OPT_FLAG_AUDIO_PARAM | AV_OPT_FLAG_ENCODING_PARAM );*/
 	}
 
 	// Continue if codec found and we can open it
@@ -1112,7 +1112,7 @@ static int open_video( mlt_properties properties,  AVFormatContext *oc, AVStream
 	// Process properties as AVOptions on the AVCodec
 	if ( codec && codec->priv_class )
 	{
-		char *vpre = mlt_properties_get( properties, "vpre" );
+		/*char *vpre = mlt_properties_get( properties, "vpre" );
 		if ( !video_enc->priv_data && codec->priv_data_size )
 		{
 			video_enc->priv_data = av_mallocz( codec->priv_data_size );
@@ -1125,7 +1125,7 @@ static int open_video( mlt_properties properties,  AVFormatContext *oc, AVStream
 			apply_properties( video_enc->priv_data, p, AV_OPT_FLAG_VIDEO_PARAM | AV_OPT_FLAG_ENCODING_PARAM );
 			mlt_properties_close( p );
 		}
-		apply_properties( video_enc->priv_data, properties, AV_OPT_FLAG_VIDEO_PARAM | AV_OPT_FLAG_ENCODING_PARAM );
+		apply_properties( video_enc->priv_data, properties, AV_OPT_FLAG_VIDEO_PARAM | AV_OPT_FLAG_ENCODING_PARAM );*/
 	}
 
 	if( codec && codec->pix_fmts )
