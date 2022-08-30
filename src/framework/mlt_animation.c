@@ -603,6 +603,9 @@ int mlt_animation_prev_key( mlt_animation self, mlt_animation_item item, int pos
 	while ( node && node->next && position >= node->next->item.frame )
 		node = node->next;
 
+	if ( position < node->item.frame )
+		node = NULL;
+
 	if ( node )
 	{
 		item->frame = node->item.frame;
@@ -674,8 +677,11 @@ char *mlt_animation_serialize_cut_tf( mlt_animation self, int in, int out, mlt_t
 					break;
 
 				// Special case - crop at the out point
-				if ( item.frame > out )
+				if ( item.frame > out ) {
 					mlt_animation_get_item( self, &item, out );
+					// To ensure correct seeding
+					item.is_key = 1;
+				}
 			}
 			// We've handled the last keyframe
 			else

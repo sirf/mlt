@@ -1,6 +1,6 @@
 /*
  * filter_rescale.c -- scale the producer video frame size to match the consumer
- * Copyright (C) 2003-2014 Meltytech, LLC
+ * Copyright (C) 2003-2022 Meltytech, LLC
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -172,7 +172,7 @@ static int filter_get_image( mlt_frame frame, uint8_t **image, mlt_image_format 
 		int iheight = *height;
 		int owidth = *width;
 		int oheight = *height;
-		char *interps = mlt_properties_get( properties, "rescale.interp" );
+		char *interps = mlt_properties_get( properties, "consumer.rescale" );
 
 		if ( mlt_properties_get( filter_properties, "factor" ) )
 		{
@@ -185,7 +185,7 @@ static int filter_get_image( mlt_frame frame, uint8_t **image, mlt_image_format 
 		if ( interps == NULL )
 		{
 			interps = mlt_properties_get( MLT_FILTER_PROPERTIES( filter ), "interpolation" );
-			mlt_properties_set( properties, "rescale.interp", interps );
+			mlt_properties_set( properties, "consumer.rescale", interps );
 		}
 	
 		// If meta.media.width/height exist, we want that as minimum information
@@ -211,7 +211,7 @@ static int filter_get_image( mlt_frame frame, uint8_t **image, mlt_image_format 
 		// Deinterlace if height is changing to prevent fields mixing on interpolation
 		// One exception: non-interpolated, integral scaling
 		if ( iheight != oheight && ( strcmp( interps, "nearest" ) || ( iheight % oheight != 0 ) ) )
-			mlt_properties_set_int( properties, "consumer_deinterlace", 1 );
+			mlt_properties_set_int( properties, "consumer.progressive", 1 );
 
 		// Convert the image to yuv422 when using the local scaler
 		if ( scaler_method == filter_scale )
@@ -221,7 +221,7 @@ static int filter_get_image( mlt_frame frame, uint8_t **image, mlt_image_format 
 		mlt_frame_get_image( frame, image, format, &iwidth, &iheight, writable );
 
 		// Get rescale interpretation again, in case the producer wishes to override scaling
-		interps = mlt_properties_get( properties, "rescale.interp" );
+		interps = mlt_properties_get( properties, "consumer.rescale" );
 	
 		if ( *image && strcmp( interps, "none" ) && ( iwidth != owidth || iheight != oheight ) )
 		{
@@ -244,7 +244,7 @@ static int filter_get_image( mlt_frame frame, uint8_t **image, mlt_image_format 
 			}
 			// Scale the alpha channel only if exists and not correct size
 			int alpha_size = 0;
-			mlt_properties_get_data( properties, "alpha", &alpha_size );
+			mlt_frame_get_alpha_size(frame, &alpha_size);
 			if ( alpha_size > 0 && alpha_size != ( owidth * oheight ) && alpha_size != ( owidth * ( oheight + 1 ) ) )
 				scale_alpha( frame, iwidth, iheight, owidth, oheight );
 		}

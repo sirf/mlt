@@ -1,6 +1,6 @@
 /*
  * filter_resize.c -- resizing filter
- * Copyright (C) 2003-2020 Meltytech, LLC
+ * Copyright (C) 2003-2022 Meltytech, LLC
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -139,7 +139,7 @@ static uint8_t *frame_resize_image( mlt_frame frame, int owidth, int oheight, ml
 	uint8_t *input = mlt_properties_get_data( properties, "image", NULL );
 	uint8_t *alpha = mlt_frame_get_alpha( frame );
 	int alpha_size = 0;
-	mlt_properties_get_data( properties, "alpha", &alpha_size );
+	mlt_frame_get_alpha_size(frame, &alpha_size);
 	int bpp = 0;
 	mlt_image_format_size( format, owidth, oheight, &bpp );
 
@@ -210,15 +210,8 @@ static int filter_get_image( mlt_frame frame, uint8_t **image, mlt_image_format 
 	// Reset the aspect ratio
 	mlt_properties_set_double( properties, "aspect_ratio", aspect_ratio );
 
-	// XXX: This is a hack, but it forces the force_full_luma to apply by doing a RGB
-	// conversion because range scaling only occurs on YUV->RGB. And we do it here,
-	// after the deinterlace filter, which only operates in YUV to avoid a YUV->RGB->YUV->?.
-	// Instead, it will go YUV->RGB->?.
-	if ( mlt_properties_get_int( properties, "force_full_luma" ) )
-		*format = mlt_image_rgba;
-
-	// Hmmm...
-	char *rescale = mlt_properties_get( properties, "rescale.interp" );
+	// Skip scaling if requested
+	char *rescale = mlt_properties_get( properties, "consumer.rescale" );
 	if ( rescale != NULL && !strcmp( rescale, "none" ) )
 		return mlt_frame_get_image( frame, image, format, width, height, writable );
 

@@ -1,6 +1,6 @@
 /*
  * filter_movit_convert.cpp
- * Copyright (C) 2013-2015 Dan Dennedy <dan@dennedy.org>
+ * Copyright (C) 2013-2022 Dan Dennedy <dan@dennedy.org>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -113,10 +113,10 @@ static GammaCurve getGammaCurve( int color_trc )
 // Also, update the frame's color_trc property with the selection.
 static GammaCurve getGammaCurve( mlt_properties properties )
 {
-	const char *color_trc = mlt_properties_get( properties, "consumer_color_trc" );
+	const char *color_trc = mlt_properties_get( properties, "consumer.color_trc" );
 	if ( color_trc ) {
 		// If specified with enum or int.
-		int n = mlt_properties_get_int( properties, "consumer_color_trc" );
+		int n = mlt_properties_get_int( properties, "consumer.color_trc" );
 		switch ( n ) {
 		case AVCOL_TRC_BT709:
 		case AVCOL_TRC_SMPTE170M:
@@ -185,7 +185,7 @@ static void get_format_from_properties( mlt_properties properties, ImageFormat* 
 	if ( mlt_properties_get_int( properties, "force_full_luma" ) ) {
 		ycbcr_format->full_range = true;
 	} else {
-		ycbcr_format->full_range = ( mlt_properties_get_int( properties, "full_luma" ) == 1 );
+		ycbcr_format->full_range = ( mlt_properties_get_int( properties, "full_range" ) == 1 );
 	}
 
 	// TODO: make new frame properties set by producers

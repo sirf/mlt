@@ -1,6 +1,6 @@
 /*
  * transition_luma.c -- a generic dissolve/wipe processor
- * Copyright (C) 2003-2020 Meltytech, LLC
+ * Copyright (C) 2003-2022 Meltytech, LLC
  *
  * Adapted from Kino Plugin Timfx, which is
  * Copyright (C) 2002 Timothy M. Shead <tshead@k-3d.com>
@@ -85,14 +85,13 @@ static int dissolve_slice( int id, int index, int count, void *context )
 {
 	struct dissolve_slice_context ctx = *((struct dissolve_slice_context*) context);
 	int stride = ctx.width * 2;
-	int slice_height = (ctx.height + count - 1) / count;
+	int slice_start, slice_height = mlt_slices_size_slice(count, index, ctx.height, &slice_start);
 	int i;
 
-	ctx.dst_image += index * slice_height * stride;
-	ctx.src_image += index * slice_height * stride;
-	if (ctx.dst_alpha) ctx.dst_alpha += index * slice_height * ctx.width;
-	if (ctx.src_alpha) ctx.src_alpha += index * slice_height * ctx.width;
-	slice_height = MIN(slice_height, ctx.height - index * slice_height);
+	ctx.dst_image += slice_start * stride;
+	ctx.src_image += slice_start * stride;
+	if (ctx.dst_alpha) ctx.dst_alpha += slice_start * ctx.width;
+	if (ctx.src_alpha) ctx.src_alpha += slice_start * ctx.width;
 
 	for (i = 0; i < slice_height; i++) {
 		composite_line_yuv_float( ctx.dst_image, ctx.src_image, ctx.width, ctx.src_alpha, ctx.dst_alpha, ctx.weight );
@@ -471,7 +470,7 @@ static int transition_get_image( mlt_frame a_frame, uint8_t **image, mlt_image_f
 					if (luma_image) {
 						if (is_clip) {
 							yuv422_to_luma16(luma_image, &luma_bitmap, luma_width, luma_height,
-								mlt_properties_get_int(MLT_FRAME_PROPERTIES(luma_frame), "full_luma"));
+								mlt_properties_get_int(MLT_FRAME_PROPERTIES(luma_frame), "full_range"));
 						} else {
 							mlt_luma_map_from_yuv422(luma_image, &luma_bitmap, luma_width, luma_height);
 						}
@@ -491,6 +490,7 @@ static int transition_get_image( mlt_frame a_frame, uint8_t **image, mlt_image_f
 					mlt_properties_set_data(properties, "producer", producer, 0, (mlt_destructor) mlt_producer_close, NULL);
 				} else {
 					// Cleanup the luma producer
+					mlt_properties_clear(properties, "producer");
 					mlt_producer_close(producer);
 					producer = NULL;
 				}
@@ -503,7 +503,7 @@ static int transition_get_image( mlt_frame a_frame, uint8_t **image, mlt_image_f
 	float frame_delta = mlt_transition_get_progress_delta( transition, a_frame );
 	float luma_softness = mlt_properties_get_double( properties, "softness" );
 	int progressive = 
-			mlt_properties_get_int( a_props, "consumer_deinterlace" ) ||
+			mlt_properties_get_int( a_props, "consumer.progressive" ) ||
 			mlt_properties_get_int( properties, "progressive" ) ||
 			mlt_properties_get_int( b_props, "luma.progressive" );
 	int top_field_first =  mlt_properties_get_int( b_props, "top_field_first" );

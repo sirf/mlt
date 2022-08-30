@@ -1,4 +1,4 @@
-schema_version: 0.3
+schema_version: 7.0
 type: filter
 identifier: audiospectrum
 title: Audio Spectrum Filter
@@ -103,7 +103,8 @@ parameters:
     default: "0 0 100% 100%"
     readonly: no
     mutable: yes
-    
+    animation: yes
+
   - identifier: fill
     title: Fill
     description: >
@@ -160,6 +161,18 @@ parameters:
     mutable: yes
     widget: combo
     
+  - identifier: segment_gap
+    title: Segment Gap
+    type: integer
+    description: >
+      The space in pixels between the segments.
+    mutable: yes
+    readonly: no
+    default: 10
+    minimum: 0
+    maximum: 100
+    unit: pixels
+    
   - identifier: bands
     title: Points
     type: integer
@@ -205,6 +218,17 @@ parameters:
     minimum: -100
     maximum: 0
     unit: dB
+    
+  - identifier: segments
+    title: Segments
+    type: integer
+    description: >
+      The number of segments to draw if the graph type is "segment".
+    mutable: yes
+    readonly: no
+    default: 10
+    minimum: 2
+    maximum: 100
     
   - identifier: window_size
     title: Window Size

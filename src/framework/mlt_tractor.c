@@ -3,7 +3,7 @@
  * \brief tractor service class
  * \see mlt_tractor_s
  *
- * Copyright (C) 2003-2018 Meltytech, LLC
+ * Copyright (C) 2003-2022 Meltytech, LLC
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -358,13 +358,10 @@ static int producer_get_image( mlt_frame self, uint8_t **buffer, mlt_image_forma
 	mlt_properties properties = MLT_FRAME_PROPERTIES( self );
 	mlt_frame frame = mlt_frame_pop_service( self );
 	mlt_properties frame_properties = MLT_FRAME_PROPERTIES( frame );
-	mlt_properties_set( frame_properties, "rescale.interp", mlt_properties_get( properties, "rescale.interp" ) );
+
 	mlt_properties_set_int( frame_properties, "resize_alpha", mlt_properties_get_int( properties, "resize_alpha" ) );
 	mlt_properties_set_int( frame_properties, "distort", mlt_properties_get_int( properties, "distort" ) );
-	mlt_properties_set_int( frame_properties, "consumer_deinterlace", mlt_properties_get_int( properties, "consumer_deinterlace" ) );
-	mlt_properties_set( frame_properties, "deinterlace_method", mlt_properties_get( properties, "deinterlace_method" ) );
-	mlt_properties_set_int( frame_properties, "consumer_tff", mlt_properties_get_int( properties, "consumer_tff" ) );
-	mlt_properties_set( frame_properties, "consumer_color_trc", mlt_properties_get( properties, "consumer_color_trc" ) );
+	mlt_properties_copy(frame_properties, properties, "consumer.");
 	// WebVfx uses this to setup a consumer-stopping event handler.
 	mlt_properties_set_data( frame_properties, "consumer", mlt_properties_get_data( properties, "consumer", NULL ), 0, NULL, NULL );
 
@@ -378,6 +375,7 @@ static int producer_get_image( mlt_frame self, uint8_t **buffer, mlt_image_forma
 	mlt_properties_set_int( properties, "progressive", mlt_properties_get_int( frame_properties, "progressive" ) );
 	mlt_properties_set_int( properties, "distort", mlt_properties_get_int( frame_properties, "distort" ) );
 	mlt_properties_set_int( properties, "colorspace", mlt_properties_get_int( frame_properties, "colorspace" ) );
+	mlt_properties_set_int( properties, "full_range", mlt_properties_get_int( frame_properties, "full_range" ) );
 	mlt_properties_set_int( properties, "force_full_luma", mlt_properties_get_int( frame_properties, "force_full_luma" ) );
 	mlt_properties_set_int( properties, "top_field_first", mlt_properties_get_int( frame_properties, "top_field_first" ) );
 	mlt_properties_set( properties, "color_trc", mlt_properties_get( frame_properties, "color_trc" ) );
@@ -399,12 +397,10 @@ static int producer_get_image( mlt_frame self, uint8_t **buffer, mlt_image_forma
 		}
 	}
 
-	data = mlt_frame_get_alpha( frame );
-	if ( data )
-	{
-		mlt_properties_get_data( frame_properties, "alpha", &size );
-		mlt_frame_set_alpha( self, data, size, NULL );
-	};
+	data = mlt_frame_get_alpha_size(frame, &size);
+	if (data) {
+		mlt_frame_set_alpha(self, data, size, NULL);
+	}
 	self->convert_image = frame->convert_image;
 	self->convert_audio = frame->convert_audio;
 	return 0;
@@ -415,7 +411,7 @@ static int producer_get_audio( mlt_frame self, void **buffer, mlt_audio_format *
 	mlt_properties properties = MLT_FRAME_PROPERTIES( self );
 	mlt_frame frame = mlt_frame_pop_audio( self );
 	mlt_properties frame_properties = MLT_FRAME_PROPERTIES( frame );
-	mlt_properties_set( frame_properties, "consumer_channel_layout", mlt_properties_get( properties, "consumer_channel_layout" ) );
+	mlt_properties_set( frame_properties, "consumer.channel_layout", mlt_properties_get( properties, "consumer.channel_layout" ) );
 	mlt_properties_set( frame_properties, "producer_consumer_fps", mlt_properties_get( properties, "producer_consumer_fps" ) );
 	mlt_frame_get_audio( frame, buffer, format, frequency, channels, samples );
 	mlt_frame_set_audio( self, *buffer, *format, mlt_audio_format_size( *format, *samples, *channels ), NULL );
@@ -502,14 +498,7 @@ static int producer_get_frame( mlt_producer parent, mlt_frame_ptr frame, int tra
 
 				// Pass all unique meta properties from the producer's frame to the new frame
 				mlt_properties_lock( temp_properties );
-				int props_count = mlt_properties_count( temp_properties );
-				int j;
-				for ( j = 0; j < props_count; j ++ )
-				{
-					char *name = mlt_properties_get_name( temp_properties, j );
-					if ( !strncmp( name, "meta.", 5 ) && !mlt_properties_get( frame_properties, name ) )
-						mlt_properties_set( frame_properties, name, mlt_properties_get_value( temp_properties, j ) );
-				}
+				mlt_properties_copy(frame_properties, temp_properties, "meta.");
 				mlt_properties_unlock( temp_properties );
 
 				// Copy the format conversion virtual functions

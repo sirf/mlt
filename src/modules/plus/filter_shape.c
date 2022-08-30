@@ -1,8 +1,6 @@
 /*
  * filter_shape.c -- Arbitrary alpha channel shaping
- * Copyright (C) 2005 Visual Media Fx Inc.
- * Copyright (C) 2021 Meltytech, LLC
- * Author: Charles Yates <charles.yates@gmail.com>
+ * Copyright (C) 2008-2022 Meltytech, LLC
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -25,6 +23,20 @@
 #include <framework/mlt_frame.h>
 #include <framework/mlt_producer.h>
 
+typedef struct
+{
+	uint8_t *alpha;
+	uint8_t *mask;
+	int width;
+	int height;
+	double softness;
+	double mix;
+	int invert;
+	int invert_mask;
+	double offset;
+	double divisor;
+} slice_desc;
+
 static inline double smoothstep( const double e1, const double e2, const double a )
 {
     if ( a < e1 ) return 0.0;
@@ -32,6 +44,131 @@ static inline double smoothstep( const double e1, const double e2, const double 
     double v = ( a - e1 ) / ( e2 - e1 );
     return ( v * v * ( 3 - 2 * v ) );
 }
+
+
+static int slice_alpha_add(int id, int index, int jobs, void* data)
+{
+	(void) id; // unused
+	slice_desc* desc = ((slice_desc*) data);
+	int slice_line_start, slice_height = mlt_slices_size_slice(jobs, index, desc->height, &slice_line_start);
+	int size = desc->width * slice_height;
+	uint8_t *p = desc->alpha + slice_line_start * desc->width;
+	uint8_t *q = desc->mask + slice_line_start * desc->width;
+	uint32_t b;
+
+	for (int i = 0; i < size; ++i) {
+		b = (uint32_t) (q[i] ^ desc->invert_mask);
+		p[i] = ((uint8_t) MIN((uint32_t) p[i] + b, 255)) ^ desc->invert;
+	}
+
+	return 0;
+}
+
+static int slice_alpha_maximum(int id, int index, int jobs, void* data)
+{
+	(void) id; // unused
+	slice_desc* desc = ((slice_desc*) data);
+	int slice_line_start, slice_height = mlt_slices_size_slice(jobs, index, desc->height, &slice_line_start);
+	int size = desc->width * slice_height;
+	uint8_t *p = desc->alpha + slice_line_start * desc->width;
+	uint8_t *q = desc->mask + slice_line_start * desc->width;
+
+	for (int i = 0; i < size; ++i) {
+		p[i] = MAX(p[i], (q[i] ^ desc->invert_mask)) ^ desc->invert;
+	}
+
+	return 0;
+}
+
+static int slice_alpha_minimum(int id, int index, int jobs, void* data)
+{
+	(void) id; // unused
+	slice_desc* desc = ((slice_desc*) data);
+	int slice_line_start, slice_height = mlt_slices_size_slice(jobs, index, desc->height, &slice_line_start);
+	int size = desc->width * slice_height;
+	uint8_t *p = desc->alpha + slice_line_start * desc->width;
+	uint8_t *q = desc->mask + slice_line_start * desc->width;
+
+	for (int i = 0; i < size; ++i) {
+		p[i] = MIN(p[i], (q[i] ^ desc->invert_mask)) ^ desc->invert;
+	}
+
+	return 0;
+}
+
+static int slice_alpha_overwrite(int id, int index, int jobs, void* data)
+{
+	(void) id; // unused
+	slice_desc* desc = ((slice_desc*) data);
+	int slice_line_start, slice_height = mlt_slices_size_slice(jobs, index, desc->height, &slice_line_start);
+	int size = desc->width * slice_height;
+	uint8_t *p = desc->alpha + slice_line_start * desc->width;
+	uint8_t *q = desc->mask + slice_line_start * desc->width;
+
+	for (int i = 0; i < size; ++i) {
+		p[i] = (q[i] ^ desc->invert_mask) ^ desc->invert;
+	}
+
+	return 0;
+}
+
+static int slice_alpha_subtract(int id, int index, int jobs, void* data)
+{
+	(void) id; // unused
+	slice_desc* desc = ((slice_desc*) data);
+	int slice_line_start, slice_height = mlt_slices_size_slice(jobs, index, desc->height, &slice_line_start);
+	int size = desc->width * slice_height;
+	uint8_t *p = desc->alpha + slice_line_start * desc->width;
+	uint8_t *q = desc->mask + slice_line_start * desc->width;
+	uint8_t a;
+
+	for (int i = 0; i < size; ++i) {
+		a = q[i] ^ desc->invert_mask;
+		p[i] = (p[i] > a ? p[i] - a : 0) ^ desc->invert;
+	}
+
+	return 0;
+}
+
+static int slice_alpha_proc(int id, int index, int jobs, void* data)
+{
+	(void) id; // unused
+	slice_desc* desc = ((slice_desc*) data);
+	int slice_line_start, slice_height = mlt_slices_size_slice(jobs, index, desc->height, &slice_line_start);
+	int size = desc->width * slice_height;
+	uint8_t *p = desc->alpha + slice_line_start * desc->width;
+	uint8_t *q = desc->mask + slice_line_start * desc->width;
+	double a;
+
+	for (int i = 0; i < size; ++i) {
+		a = (double)(q[i] ^ desc->invert_mask) / desc->divisor;
+		a = 1.0 - smoothstep(a, a + desc->softness, desc->mix);
+		p[i] = (uint8_t)(p[i] * a) ^ desc->invert;
+	}
+
+	return 0;
+}
+
+static int slice_luma_proc(int id, int index, int jobs, void* data)
+{
+	(void) id; // unused
+	slice_desc* desc = ((slice_desc*) data);
+	int slice_line_start, slice_height = mlt_slices_size_slice(jobs, index, desc->height, &slice_line_start);
+	int size = desc->width * slice_height;
+	uint8_t *p = desc->alpha + slice_line_start * desc->width;
+	uint8_t *q = desc->mask + slice_line_start * desc->width * 2;
+	double a = 0;
+
+	for (int i = 0; i < size; ++i) {
+		a = ((double)(q[i*2] ^ desc->invert_mask) - desc->offset) / desc->divisor;
+		a = smoothstep(a, a + desc->softness, desc->mix);
+		p[i] = (uint8_t )(p[i] * a) ^ desc->invert;
+	}
+
+	return 0;
+}
+
+
 
 /** Get the images and apply the luminance of the mask to the alpha of the frame.
 */
@@ -48,6 +185,7 @@ static int filter_get_image( mlt_frame frame, uint8_t **image, mlt_image_format 
 	int use_luminance = mlt_properties_get_int( MLT_FILTER_PROPERTIES( filter ), "use_luminance" );
 	int use_mix = mlt_properties_get_int( MLT_FILTER_PROPERTIES( filter ), "use_mix" );
 	int invert = mlt_properties_get_int( MLT_FILTER_PROPERTIES( filter ), "invert" ) * 255;
+	int invert_mask = mlt_properties_get_int( MLT_FILTER_PROPERTIES( filter ), "invert_mask" ) * 255;
 
 	if (mlt_properties_get_int(MLT_FILTER_PROPERTIES(filter), "reverse")) {
 		mix = 1.0 - mix;
@@ -58,19 +196,17 @@ static int filter_get_image( mlt_frame frame, uint8_t **image, mlt_image_format 
 	*format = mlt_image_yuv422;
 	*width -= *width % 2;
 	if ( mlt_frame_get_image( frame, image, format, width, height, 1 ) == 0 &&
-		 ( !use_luminance || !use_mix || (int) mix != 1 || invert == 255 ) )
+		 (!use_luminance || !use_mix || (int) mix != 1 || invert == 255 || invert_mask == 255) )
 	{
 		// Obtain a scaled/distorted mask to match
 		uint8_t *mask_img = NULL;
 		mlt_image_format mask_fmt = mlt_image_yuv422;
 		mlt_properties_set_int( MLT_FRAME_PROPERTIES( mask ), "distort", 1 );
-		mlt_properties_pass_list( MLT_FRAME_PROPERTIES( mask ), MLT_FRAME_PROPERTIES( frame ), "consumer_deinterlace, deinterlace_method, rescale.interp, consumer_tff, consumer_color_trc" );
+		mlt_properties_copy(MLT_FRAME_PROPERTIES(mask), MLT_FRAME_PROPERTIES(frame), "consumer.");
 
 		if ( mlt_frame_get_image( mask, &mask_img, &mask_fmt, width, height, 0 ) == 0 )
 		{
 			int size = *width * *height;
-			double a = 0;
-			double b = 0;
 			uint8_t* p = mlt_frame_get_alpha( frame );
 			if ( !p )
 			{
@@ -85,25 +221,46 @@ static int filter_get_image( mlt_frame frame, uint8_t **image, mlt_image_format 
 				uint8_t* q = mlt_frame_get_alpha( mask );
 				if ( !q )
 				{
+					mlt_log_warning(MLT_FILTER_SERVICE(filter), "failed to get alpha channel from mask: %s\n",
+						mlt_properties_get(MLT_FILTER_PROPERTIES(filter), "resource"));
 					int alphasize = *width * *height;
 					q = mlt_pool_alloc( alphasize );
 					memset( q, 255, alphasize );
 					mlt_frame_set_alpha( mask, q, alphasize, mlt_pool_release );
 				}
+				slice_desc desc = {
+					.alpha = p,
+					.mask = q,
+					.width = *width,
+					.height = *height,
+					.softness = softness,
+					.mix = mix,
+					.invert = invert,
+					.invert_mask = invert_mask,
+					.offset = 0.0,
+					.divisor = 255.0
+				};
 				if ( use_mix )
 				{
-					while( size -- )
-					{
-						a = ( double )*q ++ / 255.0;
-						b = 1.0 - smoothstep( a, a + softness, mix );
-						*p = ( uint8_t )( *p * b ) ^ invert;
-						p ++;
-					}
+					mlt_slices_run_normal(0, slice_alpha_proc, &desc);
 				}
 				else
 				{
-					while( size -- )
-						*p++ = *q++;
+					const char *op = mlt_properties_get(MLT_FILTER_PROPERTIES(filter), "alpha_operation");
+					if (op && op[0] != '\0') {
+						if (op[0] == 'a')
+							mlt_slices_run_normal(0, slice_alpha_add, &desc);
+						else if (op[0] == 's')
+							mlt_slices_run_normal(0, slice_alpha_subtract, &desc);
+						else if (!strncmp("ma", op, 2))
+							mlt_slices_run_normal(0, slice_alpha_maximum, &desc);
+						else if (!strncmp("mi", op, 2))
+							mlt_slices_run_normal(0, slice_alpha_minimum, &desc);
+						else
+							mlt_slices_run_normal(0, slice_alpha_overwrite, &desc);
+					} else {
+						mlt_slices_run_normal(0, slice_alpha_overwrite, &desc);
+					}
 				}
 			}
 			else if ( !use_mix )
@@ -112,27 +269,27 @@ static int filter_get_image( mlt_frame frame, uint8_t **image, mlt_image_format 
 				uint8_t *q = mask_img;
 				while( size -- )
 				{
-					*p = *q;
+					*p = *q ^ invert_mask;
 					p++;
 					q += 2;
 				}
 			}
-			else if ( (int) mix != 1 || invert == 255 )
+			else if ((int) mix != 1 || invert == 255 || invert_mask == 255)
 			{
-				int full_range = mlt_properties_get_int( MLT_FRAME_PROPERTIES( frame ), "full_luma" );
-				double offset = full_range ? 0.0 : 16.0;
-				double divisor = full_range ? 255.0 : 235.0;
-				uint8_t *q = mask_img;
-				// Ensure softness tends to zero as mix tends to 1
-				softness *= ( 1.0 - mix );
-				while( size -- )
-				{
-					a = ( ( double ) *q - offset ) / divisor;
-					b = smoothstep( a, a + softness, mix );
-					*p = ( uint8_t )( *p * b ) ^ invert;
-					p ++;
-					q += 2;
-				}
+				int full_range = mlt_properties_get_int( MLT_FRAME_PROPERTIES( frame ), "full_range" );
+				slice_desc desc = {
+				    .alpha = p,
+				    .mask = mask_img,
+				    .width = *width,
+				    .height = *height,
+				    .softness = softness * (1.0 - mix),
+				    .mix = mix,
+				    .invert = invert,
+				    .invert_mask = invert_mask,
+				    .offset = full_range ? 0.0 : 16.0,
+				    .divisor = full_range ? 255.0 : 235.0
+				};
+				mlt_slices_run_normal(0, slice_luma_proc, &desc);
 			}
 		}
 	}
@@ -198,6 +355,7 @@ static mlt_frame filter_process( mlt_filter filter, mlt_frame frame )
 		mlt_frame mask = NULL;
 		double alpha_mix = mlt_properties_anim_get_double( MLT_FILTER_PROPERTIES(filter), "mix", position, length );
 		mlt_properties_pass( MLT_PRODUCER_PROPERTIES( producer ), MLT_FILTER_PROPERTIES( filter ), "producer." );
+		mlt_properties_clear( MLT_FILTER_PROPERTIES( filter ), "producer.refresh" );
 		mlt_producer_seek( producer, position );
 		if ( mlt_service_get_frame( MLT_PRODUCER_SERVICE( producer ), &mask, 0 ) == 0 )
 		{

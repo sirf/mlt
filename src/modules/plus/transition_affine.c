@@ -1,6 +1,6 @@
 /*
  * transition_affine.c -- affine transformations
- * Copyright (C) 2003-2021 Meltytech, LLC
+ * Copyright (C) 2003-2022 Meltytech, LLC
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -327,13 +327,12 @@ static int sliced_proc( int id, int index, int jobs, void* cookie )
 {
 	(void) id; // unused
 	struct sliced_desc ctx = *((struct sliced_desc*) cookie);
-	int height_slice = (ctx.a_height + jobs / 2) / jobs;
-	int starty = height_slice * index;
+	int starty, height_slice = mlt_slices_size_slice(jobs, index, ctx.a_height, &starty);
 	double x, y;
 	double dx, dy;
 	int i, j;
 
-	ctx.a_image += (index * height_slice) * (ctx.a_width * 4);
+	ctx.a_image += starty * (ctx.a_width * 4);
 	for (i = 0, y = ctx.lower_y; i < ctx.a_height; i++, y++) {
 		if (i >= starty && i < (starty + height_slice)) {
 			for (j = 0, x = ctx.lower_x; j < ctx.a_width; j++, x++) {
@@ -483,7 +482,7 @@ static int transition_get_image( mlt_frame a_frame, uint8_t **image, mlt_image_f
 				b_height = MAX(b_width * b_ar / b_dar, 1);
 			}
 			// Set the rescale interpolation to match the frame
-			mlt_properties_set( b_props, "rescale.interp", mlt_properties_get( a_props, "rescale.interp" ) );
+			mlt_properties_set( b_props, "consumer.rescale", mlt_properties_get( a_props, "consumer.rescale" ) );
 			// Disable padding (resize filter)
 			mlt_properties_set_int( b_props, "distort", 1 );
 	} else if (mlt_properties_get_int(b_props, "always_scale") || (!mlt_properties_get_int(b_props, "interpolation_not_required")
@@ -496,7 +495,7 @@ static int transition_get_image( mlt_frame a_frame, uint8_t **image, mlt_image_f
 			b_height = MAX(b_width * b_ar / b_dar, 1);
 		}
 		// Set the rescale interpolation to match the frame
-		mlt_properties_set( b_props, "rescale.interp", mlt_properties_get( a_props, "rescale.interp" ) );
+		mlt_properties_set( b_props, "consumer.rescale", mlt_properties_get( a_props, "consumer.rescale" ) );
 		// Disable padding (resize filter)
 		mlt_properties_set_int( b_props, "distort", 1 );
 	} else {
@@ -511,16 +510,16 @@ static int transition_get_image( mlt_frame a_frame, uint8_t **image, mlt_image_f
 		// Check if we are applied as a filter inside a transition
 		if (b_resource && !strcmp("<track>", b_resource)) {
 			// Set the rescale interpolation to match the frame
-			mlt_properties_set( b_props, "rescale.interp", mlt_properties_get( a_props, "rescale.interp" ) );
+			mlt_properties_set( b_props, "consumer.rescale", mlt_properties_get( a_props, "consumer.rescale" ) );
 		} else {
 			// Suppress padding and aspect normalization.
-			mlt_properties_set( b_props, "rescale.interp", "none" );
+			mlt_properties_set( b_props, "consumer.rescale", "none" );
 		}
 	}
 	mlt_log_debug(MLT_TRANSITION_SERVICE(transition), "requesting image B at resolution %dx%d\n", b_width, b_height);
 
 	// This is not a field-aware transform.
-	mlt_properties_set_int( b_props, "consumer_deinterlace", 1 );
+	mlt_properties_set_int( b_props, "consumer.progressive", 1 );
 
 	error = mlt_frame_get_image( b_frame, &b_image, &b_format, &b_width, &b_height, 0 );
 	if (error || !b_image) {
@@ -623,7 +622,7 @@ static int transition_get_image( mlt_frame a_frame, uint8_t **image, mlt_image_f
 		}
 
 
-		char *interps = mlt_properties_get( a_props, "rescale.interp" );
+		char *interps = mlt_properties_get( a_props, "consumer.rescale" );
 		// Copy in case string is changed.
 		if ( interps )
 			interps = strdup( interps );

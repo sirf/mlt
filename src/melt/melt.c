@@ -1,6 +1,6 @@
 /*
  * melt.c -- MLT command line utility
- * Copyright (C) 2002-2021 Meltytech, LLC
+ * Copyright (C) 2002-2022 Meltytech, LLC
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -31,6 +31,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <locale.h>
 
 #include <framework/mlt.h>
 
@@ -745,6 +746,7 @@ static void show_usage( char *program_name )
 "  -repeat times                            Repeat the last cut\n"
 "  -repository path                         Set the directory of MLT modules\n"
 "  -serialise [filename]                    Write the commands to a text file\n"
+"  -setlocale                               Make numeric strings locale-sensitive\n"
 "  -silent                                  Do not display position/transport\n"
 "  -split relative-frame                    Split the last cut into two cuts\n"
 "  -swap                                    Rearrange the last two cuts\n"
@@ -980,6 +982,21 @@ static void dump_properties(mlt_properties p) {
 	}
 }
 
+static mlt_repository setup_factory(const char* repo_path, int set_locale)
+{
+	mlt_repository repo = mlt_factory_init(repo_path);
+	if (repo && set_locale) {
+		// Load the system locales
+		const char* locale = "";
+#if defined(_WIN32)
+		if (getenv("LC_ALL"))
+			locale = getenv("LC_ALL");
+#endif
+		setlocale( LC_ALL, locale );
+	}
+	return repo;
+}
+
 int main( int argc, char **argv )
 {
 	int i;
@@ -997,6 +1014,7 @@ int main( int argc, char **argv )
 	const char* repo_path = NULL;
 	int is_consumer_explicit = 0;
 	int status_fifo = 1;
+	int is_setlocale = 0;
 
 	// Handle abnormal exit situations.
 	signal( SIGSEGV, abnormal_exit_handler );
@@ -1004,6 +1022,12 @@ int main( int argc, char **argv )
 	signal( SIGABRT, abnormal_exit_handler );
 
 	fprintf(stdout, "Melt starting\n");
+	for (i = 1; i < argc; i++) {
+		if (!strcmp(argv[i], "-setlocale")) {
+			is_setlocale = 1;
+			break;
+		}
+	}
 
 	for ( i = 1; i < argc; i ++ )
 	{
@@ -1025,7 +1049,7 @@ int main( int argc, char **argv )
 		{
 			// Construct the factory
 			if ( !repo )
-				repo = mlt_factory_init( repo_path );
+				repo = setup_factory(repo_path, is_setlocale);
 
 			const char *pname = argv[ ++ i ];
 			if ( pname && pname[0] != '-' )
@@ -1044,8 +1068,8 @@ int main( int argc, char **argv )
 		{
 			// Construct the factory
 			if ( !repo )
-				repo = mlt_factory_init( repo_path );
-		
+				repo = setup_factory(repo_path, is_setlocale);
+
 			const char *pname = argv[ ++ i ];
 			if ( pname && pname[0] != '-' )
 			{
@@ -1116,7 +1140,7 @@ query_all:
 		else if ( !strcmp( argv[ i ], "-version" ) || !strcmp( argv[ i ], "--version" ) )
 		{
 			fprintf( stdout, "%s " VERSION "\n"
-				"Copyright (C) 2002-2021 Meltytech, LLC\n"
+				"Copyright (C) 2002-2022 Meltytech, LLC\n"
 				"<https://www.mltframework.org/>\n"
 				"This is free software; see the source for copying conditions.  There is NO\n"
 				"warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n",
@@ -1171,7 +1195,7 @@ query_all:
 
 	// Construct the factory
 	if ( !repo )
-		repo = mlt_factory_init( repo_path );
+		repo = setup_factory(repo_path, is_setlocale);
 
 	// Create profile if not set explicitly
 	if ( getenv( "MLT_PROFILE" ) )

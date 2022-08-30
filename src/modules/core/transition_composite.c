@@ -1,6 +1,6 @@
 /*
  * transition_composite.c -- compose one image over another using alpha channel
- * Copyright (C) 2003-2021 Meltytech, LLC
+ * Copyright (C) 2003-2022 Meltytech, LLC
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -237,7 +237,7 @@ struct sliced_composite_desc
 static int sliced_composite_proc( int id, int idx, int jobs, void* cookie )
 {
 	struct sliced_composite_desc ctx = *((struct sliced_composite_desc*)cookie);
-	int i, hs = (ctx.height_src + jobs / 2) / jobs, ho = hs * idx;
+	int i, ho, hs = mlt_slices_size_slice(jobs, idx, ctx.height_src, &ho);
 
 	for ( i = 0; i < ctx.height_src; i += ctx.step )
 	{
@@ -574,7 +574,7 @@ static uint16_t* get_luma( mlt_transition self, mlt_properties properties, int w
 						mlt_image_format luma_format = mlt_image_yuv422;
 	
 						// Get image from the luma producer
-						mlt_properties_set( MLT_FRAME_PROPERTIES( luma_frame ), "rescale.interp", "none" );
+						mlt_properties_set( MLT_FRAME_PROPERTIES( luma_frame ), "consumer.rescale", "none" );
 						mlt_frame_get_image( luma_frame, &luma_image, &luma_format, &luma_width, &luma_height, 0 );
 	
 						// Generate the luma map
@@ -928,8 +928,8 @@ static int transition_get_image( mlt_frame a_frame, uint8_t **image, mlt_image_f
 		// Manual option to deinterlace
 		if ( mlt_properties_get_int( properties, "deinterlace" ) )
 		{
-			mlt_properties_set_int( a_props, "consumer_deinterlace", 1 );
-			mlt_properties_set_int( b_props, "consumer_deinterlace", 1 );
+			mlt_properties_set_int( a_props, "consumer.progressive", 1 );
+			mlt_properties_set_int( b_props, "consumer.progressive", 1 );
 		}
 
 		// TODO: Dangerous/temporary optimisation - if nothing to do, then do nothing
@@ -975,8 +975,8 @@ static int transition_get_image( mlt_frame a_frame, uint8_t **image, mlt_image_f
 		// Special case for titling...
 		if ( mlt_properties_get_int( properties, "titles" ) )
 		{
-			if ( mlt_properties_get( b_props, "rescale.interp" ) == NULL )
-				mlt_properties_set( b_props, "rescale.interp", "hyper" );
+			if ( mlt_properties_get( b_props, "consumer.rescale" ) == NULL )
+				mlt_properties_set( b_props, "consumer.rescale", "hyper" );
 			width_b = mlt_properties_get_int( a_props, "dest_width" );
 			height_b = mlt_properties_get_int( a_props, "dest_height" );
 		}
@@ -985,7 +985,7 @@ static int transition_get_image( mlt_frame a_frame, uint8_t **image, mlt_image_f
 			get_b_frame_image( self, b_frame, &image_b, &width_b, &height_b, &result ) ) )
 		{
 			int progressive = 
-					mlt_properties_get_int( a_props, "consumer_deinterlace" ) ||
+					mlt_properties_get_int( a_props, "consumer.progressive" ) ||
 					mlt_properties_get_int( properties, "progressive" );
 			int top_field_first = mlt_properties_get_int( a_props, "top_field_first" );
 			int field;

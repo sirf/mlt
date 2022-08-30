@@ -630,3 +630,20 @@ MLT_7.4.0 {
     mlt_property_is_anim;
     mlt_properties_is_anim;
 } MLT_7.1.0;
+
+MLT_7.6.0 {
+  global:
+    mlt_properties_copy;
+    mlt_slices_size_slice;
+} MLT_7.4.0;
+
+MLT_7.8.0 {
+  global:
+    mlt_frame_get_alpha_size;
+} MLT_7.6.0;
+
+MLT_7.10.0 {
+  global:
+    mlt_image_fill_checkerboard;
+    mlt_image_fill_white;
+} MLT_7.8.0;

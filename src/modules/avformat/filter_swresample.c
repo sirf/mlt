@@ -158,7 +158,7 @@ static int filter_get_audio( mlt_frame frame, void **buffer, mlt_audio_format *f
 
 	// Determine the input/output channel layout.
 	in.layout = mlt_get_channel_layout_or_default( mlt_properties_get( frame_properties, "channel_layout" ), in.channels );
-	out.layout = mlt_get_channel_layout_or_default( mlt_properties_get( frame_properties, "consumer_channel_layout" ), out.channels );
+	out.layout = mlt_get_channel_layout_or_default( mlt_properties_get( frame_properties, "consumer.channel_layout" ), out.channels );
 
 	if( in.format == out.format &&
 		in.frequency == out.frequency &&
@@ -262,7 +262,7 @@ static void filter_close( mlt_filter filter )
 	mlt_service_close( &filter->parent );
 }
 
-mlt_filter filter_swresample_init( mlt_profile profile, mlt_service_type type, const char *id, char *arg )
+mlt_filter filter_swresample_init( mlt_profile profile, char *arg )
 {
 	mlt_filter filter = mlt_filter_new();
 	private_data* pdata = (private_data*)calloc( 1, sizeof(private_data) );

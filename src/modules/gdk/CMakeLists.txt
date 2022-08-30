@@ -5,6 +5,11 @@ add_library(mltgdk MODULE
   producer_pixbuf.c
 )
 
+file(GLOB YML "*.yml")
+add_custom_target(Other_gdk_Files SOURCES
+  ${YML}
+)
+
 target_compile_options(mltgdk PRIVATE ${MLT_COMPILE_OPTIONS})
 
 target_link_libraries(mltgdk PRIVATE mlt m Threads::Threads PkgConfig::GdkPixbuf)
@@ -19,7 +24,7 @@ endif()
 if(TARGET PkgConfig::pango AND TARGET PkgConfig::fontconfig)
   target_sources(mltgdk PRIVATE producer_pango.c)
   target_link_libraries(mltgdk PRIVATE PkgConfig::pango PkgConfig::fontconfig PkgConfig::pangoft2)
-  if(APPLE)
+  if(APPLE OR MINGW)
     target_link_libraries(mltgdk PRIVATE iconv)
   endif()
   target_compile_definitions(mltgdk PRIVATE USE_PANGO)

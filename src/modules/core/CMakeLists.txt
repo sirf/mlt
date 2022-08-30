@@ -6,6 +6,7 @@ add_library(mltcore MODULE
   filter_audioconvert.c
   filter_audiomap.c
   filter_audiowave.c
+  filter_box_blur.c
   filter_brightness.c
   filter_channelcopy.c
   filter_choppy.c
@@ -21,10 +22,12 @@ add_library(mltcore MODULE
   filter_mono.c
   filter_obscure.c
   filter_panner.c
+  filter_pillar_echo.c
   filter_rescale.c
   filter_resize.c
   filter_transition.c
   filter_watermark.c
+  image_proc.c image_proc.h
   link_timeremap.c
   producer_colour.c
   producer_consumer.c
@@ -38,6 +41,13 @@ add_library(mltcore MODULE
   transition_luma.c
   transition_matte.c
   transition_mix.c
+)
+
+file(GLOB YML "*.yml")
+add_custom_target(Other_core_Files SOURCES
+  ${YML}
+  loader.dict
+  loader.ini
 )
 
 target_compile_options(mltcore PRIVATE ${MLT_COMPILE_OPTIONS})
@@ -66,6 +76,7 @@ install(FILES
   consumer_multi.yml
   filter_audiomap.yml
   filter_audiowave.yml
+  filter_box_blur.yml
   filter_brightness.yml
   filter_channelcopy.yml
   filter_choppy.yml
@@ -80,6 +91,7 @@ install(FILES
   filter_mono.yml
   filter_obscure.yml
   filter_panner.yml
+  filter_pillar_echo.yml
   filter_rescale.yml
   filter_resize.yml
   filter_transition.yml

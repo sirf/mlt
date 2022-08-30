@@ -1,6 +1,6 @@
 /*
  * consumer_avformat.c -- an encoder based on avformat
- * Copyright (C) 2003-2021 Meltytech, LLC
+ * Copyright (C) 2003-2022 Meltytech, LLC
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -769,20 +769,14 @@ static int open_audio( mlt_properties properties, AVFormatContext *oc, AVStream 
 	// Process properties as AVOptions on the AVCodec
 	if ( codec && codec->priv_class )
 	{
-		/*char *apre = mlt_properties_get( properties, "apre" );
-		if ( !c->priv_data && codec->priv_data_size )
-		{
-			c->priv_data = av_mallocz( codec->priv_data_size );
-			*(const AVClass **) c->priv_data = codec->priv_class;
-//			av_opt_set_defaults( c );
-		}
+		char *apre = NULL; // mlt_properties_get( properties, "apre" );
 		if ( apre )
 		{
 			mlt_properties p = mlt_properties_load( apre );
 			apply_properties( c->priv_data, p, AV_OPT_FLAG_AUDIO_PARAM | AV_OPT_FLAG_ENCODING_PARAM );
 			mlt_properties_close( p );
 		}
-		apply_properties( c->priv_data, properties, AV_OPT_FLAG_AUDIO_PARAM | AV_OPT_FLAG_ENCODING_PARAM );*/
+		apply_properties( c->priv_data, properties, AV_OPT_FLAG_AUDIO_PARAM | AV_OPT_FLAG_ENCODING_PARAM );
 	}
 
 	// Continue if codec found and we can open it
@@ -1112,20 +1106,14 @@ static int open_video( mlt_properties properties,  AVFormatContext *oc, AVStream
 	// Process properties as AVOptions on the AVCodec
 	if ( codec && codec->priv_class )
 	{
-		/*char *vpre = mlt_properties_get( properties, "vpre" );
-		if ( !video_enc->priv_data && codec->priv_data_size )
-		{
-			video_enc->priv_data = av_mallocz( codec->priv_data_size );
-			*(const AVClass **) video_enc->priv_data = codec->priv_class;
-//			av_opt_set_defaults( video_enc );
-		}
+		char *vpre = NULL; // mlt_properties_get( properties, "vpre" );
 		if ( vpre )
 		{
 			mlt_properties p = mlt_properties_load( vpre );
 			apply_properties( video_enc->priv_data, p, AV_OPT_FLAG_VIDEO_PARAM | AV_OPT_FLAG_ENCODING_PARAM );
 			mlt_properties_close( p );
 		}
-		apply_properties( video_enc->priv_data, properties, AV_OPT_FLAG_VIDEO_PARAM | AV_OPT_FLAG_ENCODING_PARAM );*/
+		apply_properties( video_enc->priv_data, properties, AV_OPT_FLAG_VIDEO_PARAM | AV_OPT_FLAG_ENCODING_PARAM );
 	}
 
 	if( codec && codec->pix_fmts )
@@ -1918,7 +1906,7 @@ static void *consumer_thread( void *arg )
 						struct SwsContext *context = sws_getContext( width, height, srcfmt,
 							width, height, pix_fmt, flags, NULL, NULL, NULL);
 						int src_colorspace = mlt_properties_get_int( frame_properties, "colorspace" );
-						int src_full_range = mlt_properties_get_int( frame_properties, "full_luma" );
+						int src_full_range = mlt_properties_get_int( frame_properties, "full_range" );
 						mlt_set_luma_transfer( context, src_colorspace, dst_colorspace, src_full_range, dst_full_range );
 						sws_scale( context, (const uint8_t* const*) video_avframe.data, video_avframe.linesize, 0, height,
 							converted_avframe->data, converted_avframe->linesize);
