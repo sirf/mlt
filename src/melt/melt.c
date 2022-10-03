@@ -984,6 +984,8 @@ static void dump_properties(mlt_properties p) {
 		char *name = mlt_properties_get_name(p, i);
 		printf("%s\n", name);
 	}
+}
+
 static mlt_repository setup_factory(const char* repo_path, int set_locale)
 {
 	mlt_repository repo = mlt_factory_init(repo_path);
