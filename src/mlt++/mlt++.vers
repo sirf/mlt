@@ -708,3 +708,12 @@ MLT_7.4.0 {
       "Mlt::Service::Service(Mlt::Service*)";
     };
 } MLTPP_7.1.0;
+
+MLT_7.6.0 {
+  global:
+    extern "C++" {
+      "Mlt::Animation::next_key(int, int&)";
+      "Mlt::Animation::previous_key(int, int&)";
+      "Mlt::Properties::copy(Mlt::Properties&, char const*)";
+    };
+} MLT_7.4.0;

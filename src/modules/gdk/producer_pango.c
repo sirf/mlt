@@ -546,7 +546,7 @@ static void refresh_image( producer_pango self, mlt_frame frame, int width, int 
 	// If we have a pixbuf and a valid width
 	if ( pixbuf && width > 0 )
 	{
-		char *interps = mlt_properties_get( properties, "rescale.interp" );
+		char *interps = mlt_properties_get( properties, "consumer.rescale" );
 		int interp = GDK_INTERP_BILINEAR;
 
 		if ( strcmp( interps, "nearest" ) == 0 )
@@ -565,6 +565,8 @@ static void refresh_image( producer_pango self, mlt_frame frame, int width, int 
 		// Store width and height
 		self->width = width;
 		self->height = height;
+		int has_alpha = gdk_pixbuf_get_has_alpha( self->pixbuf );
+		mlt_properties_set_int( properties, "format", has_alpha ? mlt_image_rgba : mlt_image_rgb );
 	}
 
 	// Set width/height

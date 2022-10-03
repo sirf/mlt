@@ -35,7 +35,7 @@ static int get_image( mlt_frame a_frame, uint8_t **image, mlt_image_format *form
 	mlt_properties transition_properties = MLT_TRANSITION_PROPERTIES( transition );
 
 	uint8_t *b_image = NULL;
-	bool hasAlpha = false;
+	bool hasAlpha = *format == mlt_image_rgba;
 	double opacity = 1.0;
 	QTransform transform;
 	// reference rect
@@ -53,41 +53,78 @@ static int get_image( mlt_frame a_frame, uint8_t **image, mlt_image_format *form
 	double consumer_ar = mlt_profile_sar( profile );
 	int b_width = mlt_properties_get_int( b_properties, "meta.media.width" );
 	int b_height = mlt_properties_get_int( b_properties, "meta.media.height" );
-	if ( b_height == 0 )
+	bool distort = mlt_properties_get_int( transition_properties, "distort" );
+
+	// Check the producer's native format before fetching image
+	if (mlt_properties_get_int( b_properties, "format" ) == mlt_image_rgba) {
+		hasAlpha = true;
+		*format = mlt_image_rgba;
+	}
+
+	if ( b_height == 0  || (!distort && ( b_height < *height || b_width < *width) ) )
 	{
-		b_width = normalised_width;
-		b_height = normalised_height;
+		b_width = *width;
+		b_height = *height;
 	}
 	double b_ar = mlt_frame_get_aspect_ratio( b_frame );
 	double b_dar = b_ar * b_width / b_height;
 	rect.w = -1;
 	rect.h = -1;
-	bool consumerScaling = false;
 
 	// Check transform
 	if ( mlt_properties_get( transition_properties, "rect" ) )
 	{
 		rect = mlt_properties_anim_get_rect( transition_properties, "rect", position, length );
-		if (mlt_properties_get(transition_properties, "rect") && ::strchr(mlt_properties_get(transition_properties, "rect"), '%')) {
-			rect.x *= normalised_width;
-			rect.y *= normalised_height;
-			rect.w *= normalised_width;
-			rect.h *= normalised_height;
+		if (::strchr(mlt_properties_get(transition_properties, "rect"), '%')) {
+			// We have percentage values, scale to frame size
+			rect.x *= *width;
+			rect.y *= *height;
+			rect.w *= *width;
+			rect.h *= *height;
 		}
-		double scale = mlt_profile_scale_width(profile, *width);
-		if ( scale != 1.0 ) {
-			consumerScaling = true;
+		else
+		{
+			// Adjust to preview scaling
+			double scale = mlt_profile_scale_width(profile, *width);
+			if ( scale != 1.0 )
+			{
+				rect.x *= scale;
+				rect.w *= scale;
+				if ( distort )
+				{
+					b_width *= scale;
+				}
+			}
+			scale = mlt_profile_scale_height(profile, *height);
+			if ( scale != 1.0 )
+			{
+				rect.y *= scale;
+				rect.h *= scale;
+				if ( distort )
+				{
+					b_height *= scale;
+				}
+			}
 		}
-		rect.x *= scale;
-		rect.w *= scale;
-		scale = mlt_profile_scale_height(profile, *height);
-		if ( !consumerScaling && scale != 1.0 ) {
-			consumerScaling = true;
-		}
-		rect.y *= scale;
-		rect.h *= scale;
+
 		transform.translate(rect.x, rect.y);
 		opacity = rect.o;
+		if ( !distort )
+		{
+			b_width = qMin((int)rect.w, b_width);
+			b_height = qMin((int)rect.h, b_height);
+			transform.translate( ( rect.w - b_width ) / 2.0, ( rect.h - b_height ) / 2.0 );
+		}
+		if ( opacity < 1 || rect.x > 0 || rect.y > 0 || ( rect.x + rect.w < *width ) || ( rect.y + rect.w < *height ) )
+		{
+			// we will process operations on top frame, so also process b_frame
+			hasAlpha = true;
+		}
+	}
+	else
+	{
+		b_height = *height;
+		b_width = *width;
 	}
 
 	double output_ar = mlt_profile_sar( profile );
@@ -115,10 +152,10 @@ static int get_image( mlt_frame a_frame, uint8_t **image, mlt_image_format *form
 	}
 
 	// This is not a field-aware transform.
-	mlt_properties_set_int( b_properties, "consumer_deinterlace", 1 );
+	mlt_properties_set_int( b_properties, "consumer.progressive", 1 );
 
 	// Suppress padding and aspect normalization.
-	char *interps = mlt_properties_get( properties, "rescale.interp" );
+	char *interps = mlt_properties_get( properties, "consumer.rescale" );
 	if ( interps )
 		interps = strdup( interps );
 
@@ -126,46 +163,11 @@ static int get_image( mlt_frame a_frame, uint8_t **image, mlt_image_format *form
 	{
 		return error;
 	}
-
-	// Adjust if consumer is scaling
-	if ( consumerScaling )
+	if ( distort && b_width != 0 && b_height != 0 )
 	{
-		// Scale request of b frame image to consumer scale maintaining its aspect ratio.
-		b_height = *height;
-		b_width = b_height * b_dar / b_ar;
+		transform.scale( rect.w / b_width, rect.h / b_height );
 	}
-
-	if ( rect.w != -1 )
-	{
-		if ( mlt_properties_get_int( transition_properties, "distort" ) && b_width != 0 && b_height != 0 )
-		{
-			transform.scale( rect.w / b_width, rect.h / b_height );
-		}
-		else
-		{
-			// Determine scale with respect to aspect ratio.
-			double geometry_dar = rect.w * consumer_ar / rect.h;
-			double scale;
-			if ( b_dar > geometry_dar )
-			{
-				scale = rect.w / b_width;
-			}
-			else
-			{
-				scale = rect.h / b_height * b_ar;
-			}
-
-			transform.translate((rect.w - (b_width * scale)) / 2.0, (rect.h - (b_height * scale)) / 2.0);
-			transform.scale( scale, scale );
-		}
-
-		if ( opacity < 1 || rect.x > 0 || rect.y > 0 || (rect.x + rect.w < *width ) || (rect.y + rect.w < *height ) )
-		{
-			// we will process operations on top frame, so also process b_frame
-			hasAlpha = true;
-		}
-	}
-	else
+	if ( rect.w == -1 )
 	{
 		// No transform, request profile sized image
 		if (b_dar != mlt_profile_dar( profile ) )
@@ -173,9 +175,6 @@ static int get_image( mlt_frame a_frame, uint8_t **image, mlt_image_format *form
 			// Activate transparency if the clips don't have the same aspect ratio
 			hasAlpha = true;
 		}
-		// resize to consumer request
-		b_width = *width;
-		b_height = *height;
 	}
 	if ( !hasAlpha && ( mlt_properties_get_int( transition_properties, "compositing" ) != 0 || b_width < *width || b_height < *height ) )
 	{
@@ -183,30 +182,69 @@ static int get_image( mlt_frame a_frame, uint8_t **image, mlt_image_format *form
 	}
 
 	// Check if we have transparency
-	if ( !hasAlpha )
+	int request_width = b_width;
+	int request_height = b_height;
+	bool imageFetched = false;
+	if ( !hasAlpha || *format == mlt_image_rgba )
 	{
 		// fetch image
-		error = mlt_frame_get_image( b_frame, &b_image, format, width, height, 1 );
-		if ( *format == mlt_image_rgba || mlt_frame_get_alpha( b_frame ) )
+		error = mlt_frame_get_image( b_frame, &b_image, format, &b_width, &b_height, 0 );
+		bool imageFetched = true;
+		if ( !hasAlpha && ( *format == mlt_image_rgba || mlt_frame_get_alpha( b_frame ) ) )
 		{
 			hasAlpha = true;
+		}
+		if ( hasAlpha )
+		{
+			struct mlt_image_s bimg;
+			mlt_image_set_values( &bimg, b_image, *format, b_width, b_height );
+			if ( *format != mlt_image_rgba )
+			{
+				bimg.planes[3] = mlt_frame_get_alpha( b_frame );
+				bimg.strides[3] = b_width;
+			}
+			hasAlpha = !mlt_image_is_opaque( &bimg );
 		}
 	}
 	if ( !hasAlpha )
 	{
 		// Prepare output image
+		if ( b_frame->convert_image && ( b_width != request_width || b_height != request_height ) )
+		{
+			mlt_properties_set_int( b_properties, "convert_image_width", request_width );
+			mlt_properties_set_int( b_properties, "convert_image_height", request_height );
+			b_frame->convert_image( b_frame, &b_image, format, *format );
+			*width = request_width;
+			*height = request_height;
+		}
+		else
+		{
+			*width = b_width;
+			*height = b_height;
+		}
 		*image = b_image;
-		mlt_frame_replace_image( a_frame, b_image, *format, *width, *height );
 		free( interps );
 		return 0;
 	}
-	// Get RGBA image to process
+
+	if ( !imageFetched )
+	{
+		*format = mlt_image_rgba;
+		error = mlt_frame_get_image( b_frame, &b_image, format, &b_width, &b_height, 0 );
+	}
+	if ( b_frame->convert_image && ( *format != mlt_image_rgba || b_width != request_width || b_height != request_height ) )
+	{
+		mlt_properties_set_int( b_properties, "convert_image_width", request_width );
+		mlt_properties_set_int( b_properties, "convert_image_height", request_height );
+		b_frame->convert_image( b_frame, &b_image, format, mlt_image_rgba );
+		b_width = request_width;
+		b_height = request_height;
+	}
 	*format = mlt_image_rgba;
-	error = mlt_frame_get_image( b_frame, &b_image, format, &b_width, &b_height, writable );
 
 	// Get bottom frame
 	uint8_t *a_image = NULL;
-	error = mlt_frame_get_image( a_frame, &a_image, format, width, height, 1 );
+	error = mlt_frame_get_image( a_frame, &a_image, format, width, height, 0 );
 	if (error)
 	{
 		free( interps );
@@ -236,7 +274,6 @@ static int get_image( mlt_frame a_frame, uint8_t **image, mlt_image_format *form
 	QImage topImg;
 	convert_mlt_to_qimage_rgba( b_image, &topImg, b_width, b_height );
 
-
 	// setup Qt drawing
 	QPainter painter( &bottomImg );
 	painter.setCompositionMode( ( QPainter::CompositionMode ) mlt_properties_get_int( transition_properties, "compositing" ) );
@@ -251,6 +288,8 @@ static int get_image( mlt_frame a_frame, uint8_t **image, mlt_image_format *form
 	painter.end();
 	convert_qimage_to_mlt_rgba( &bottomImg, *image, *width, *height );
 	mlt_frame_set_image( a_frame, *image, image_size, mlt_pool_release);
+	// Remove potentially large image on the B frame.
+	mlt_frame_set_image( b_frame, NULL, 0, NULL );
 	free( interps );
 	return error;
 }

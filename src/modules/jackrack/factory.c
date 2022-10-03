@@ -1,6 +1,6 @@
 /*
  * factory.c -- the factory method interfaces
- * Copyright (C) 2003-2021 Meltytech, LLC
+ * Copyright (C) 2003-2022 Meltytech, LLC
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -83,6 +83,8 @@ static void add_port_to_metadata( mlt_properties p, plugin_desc_t* desc, int j )
 	}
 	if ( LADSPA_IS_HINT_LOGARITHMIC( hint_descriptor ) )
 		mlt_properties_set( p, "scale", "log" );
+	mlt_properties_set( p, "mutable", "yes" );
+	mlt_properties_set( p, "animation", "yes" );
 }
 
 #endif
@@ -172,6 +174,7 @@ static mlt_properties metadata( mlt_service_type type, const char *id, char *dat
 				mlt_properties_set_double( p, "minimum", 0 );
 				mlt_properties_set_double( p, "maximum", 1 );
 				mlt_properties_set( p, "mutable", "yes" );
+				mlt_properties_set( p, "animation", "yes" );
 			}
 		}
 	}
@@ -210,6 +213,7 @@ MLT_REPOSITORY
 
 # ifdef WITH_JACK
 	MLT_REGISTER( mlt_service_filter_type, "jack", filter_jackrack_init );
+	MLT_REGISTER_METADATA( mlt_service_filter_type, "jack", metadata, "filter_jack.yml" );
 	MLT_REGISTER( mlt_service_filter_type, "jackrack", filter_jackrack_init );
 	MLT_REGISTER_METADATA( mlt_service_filter_type, "jackrack", metadata, "filter_jackrack.yml" );
 # endif

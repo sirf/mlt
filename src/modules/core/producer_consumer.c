@@ -1,6 +1,6 @@
 /*
  * producer_consumer.c -- produce as a consumer of an encapsulated producer
- * Copyright (C) 2008-2021 Meltytech, LLC
+ * Copyright (C) 2008-2022 Meltytech, LLC
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -60,7 +60,7 @@ static int get_image( mlt_frame frame, uint8_t **image, mlt_image_format *format
 	*image = new_image;
 	
 	// Copy the alpha channel
-	uint8_t *alpha = mlt_properties_get_data( MLT_FRAME_PROPERTIES( nested_frame ), "alpha", &size );
+	uint8_t *alpha = mlt_frame_get_alpha_size(nested_frame, &size);
 	if ( alpha && size > 0 )
 	{
 		new_image = mlt_pool_alloc( size );
@@ -172,7 +172,7 @@ static int get_frame( mlt_producer self, mlt_frame_ptr frame, int index )
 		mlt_properties_set_int( MLT_CONSUMER_PROPERTIES( cx->consumer ), "real_time",
 			mlt_properties_get_int( properties, "real_time" ) );
 		mlt_properties_pass_list( MLT_CONSUMER_PROPERTIES( cx->consumer ), properties,
-			"buffer, prefill, deinterlace_method, rescale" );
+			"buffer, prefill, deinterlacer, deinterlace_method, rescale" );
 
 		mlt_properties_pass( MLT_CONSUMER_PROPERTIES( cx->consumer ), properties, CONSUMER_PROPERTIES_PREFIX );
 		mlt_properties_pass( MLT_PRODUCER_PROPERTIES( cx->producer ), properties, PRODUCER_PROPERTIES_PREFIX );

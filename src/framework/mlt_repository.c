@@ -98,11 +98,56 @@ mlt_repository mlt_repository_init( const char *directory )
 	free(newpath);
 #endif
 
+	mlt_tokeniser tokeniser = mlt_tokeniser_init();
+	int dl_length = mlt_tokeniser_parse_new( tokeniser, getenv( "MLT_REPOSITORY_DENY" ), ":" );
+
+	// check if both qt5 and qt6 modules are available…
+	int qtmodules = 0;
+	for ( i = 0; i < count; i++ )
+	{
+		const char *object_name = mlt_properties_get_value( dir, i);
+		qtmodules += strncmp(object_name, "mltqt", strlen( "mltqt" ) );
+		qtmodules += strncmp(object_name, "mltqt6", strlen( "mltqt6" ) );
+	}
+	// …and not blocked
+	for (int j = 0; j < dl_length; j++ )
+	{
+		char *denyfile = calloc( 1, strlen( directory ) + strlen( mlt_tokeniser_get_string( tokeniser, j ) ) + 3 );
+		sprintf (denyfile, "%s/%s.", directory, mlt_tokeniser_get_string( tokeniser, j ));
+		qtmodules -= !strncmp("mltqt", denyfile, strlen( denyfile ) );
+		qtmodules -= !strncmp("mltqt6", denyfile, strlen( denyfile ) );
+		free (denyfile);
+	}
+
 	// Iterate over files
 	for ( i = 0; i < count; i++ )
 	{
 		int flags = RTLD_NOW;
 		const char *object_name = mlt_properties_get_value( dir, i);
+
+		// check if the plugin was asked to be skipped through MLT_REPOSITORY_DENY
+		int ignore = 0;
+		for (int j = 0; j < dl_length; j++ )
+		{
+			char *denyfile = calloc( 1, strlen( directory ) + strlen( mlt_tokeniser_get_string( tokeniser, j ) ) + 3 );
+			sprintf (denyfile, "%s/%s.", directory, mlt_tokeniser_get_string( tokeniser, j ));
+			ignore += !strncmp(object_name, denyfile, strlen( denyfile ) );
+			free (denyfile);
+		}
+
+		// in case we have both qt modules, we block qt6 to avoid conflicts
+		if (qtmodules == 2 && strncmp(object_name, "mltqt6", strlen( "mltqt6" ) ) )
+		{
+			ignore = 1;
+		}
+
+		if (ignore)
+		{
+			mlt_log_info(NULL, "%s: skip plugin %s\n", __FUNCTION__, object_name);
+			continue;
+		}
+
+		mlt_log_debug(NULL, "%s: processing plugin at %s\n", __FUNCTION__, object_name);
 
 		// Open the shared object
 		void *object = dlopen( object_name, flags );
@@ -135,6 +180,8 @@ mlt_repository mlt_repository_init( const char *directory )
 		mlt_log_error( NULL, "%s: no plugins found in \"%s\"\n", __FUNCTION__, directory );
 
 	mlt_properties_close( dir );
+
+	mlt_tokeniser_close( tokeniser );
 
 	return self;
 }

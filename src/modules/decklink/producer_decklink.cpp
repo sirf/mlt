@@ -1,6 +1,6 @@
 /*
  * producer_decklink.c -- input from Blackmagic Design DeckLink
- * Copyright (C) 2011-2021 Meltytech, LLC
+ * Copyright (C) 2011-2022 Meltytech, LLC
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -47,9 +47,7 @@ static int copy_lines_sliced_proc( int id, int idx, int jobs, void* cookie )
 	int c, H, Y, i;
 	struct copy_lines_sliced_desc *ctx = (struct copy_lines_sliced_desc*)cookie;
 
-	H = ( ctx->h + jobs ) / jobs;
-	Y = idx * H;
-	H = MIN( H, ctx->h - Y );
+	H = mlt_slices_size_slice(jobs, idx, ctx->h, &Y);
 
 	if ( ctx->in_fmt == bmdFormat10BitYUV ) // bmdFormat10BitYUV -> mlt_image_yuv422p16
 	{

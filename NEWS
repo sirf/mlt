@@ -1,6 +1,138 @@
 MLT Release Notes
 -----------------
 
+Version 7.8.0
+
+This highlight of this version is a new glaxnimate producer to render 2D
+vector art and animation.
+
+Framework
+  * Added `mlt_frame_get_alpha_size()` and refactored code to use it.
+  * Fixed a possible null pointer crash in `mlt_service_apply_filters()`.
+
+Modules
+  * Added a `glaxnimate` producer to the glaxnimate module.
+  * Added new file extensions for `glaxnimate` producer: json, lottie, rawr, tgs.
+  * Removed Qt4 compatibility from the qt module.
+  * Added Qt6 compatibility to the qt module.
+  * Added new file extensions for `qimage` producer: avif, heic, heif, jxl.
+  * Fixed `color_range` when using the `multi` consumer.
+  * Fixed reloading updated `results` in the `loudness` filter.
+  * Fixed `image_mode=blend` in the `timeremap` link.
+  * Fixed crash regression in `swscale` filter with odd size YUV image.
+  * Fixed the `choppy` filter may result in black frames with transitions.
+  * Prevent a crash in `avfilter` producer for a bug in glibc with `_FORTIFY_SOURCE=3`.
+
+
+Version 7.6.0
+
+This version adds image slice-threading to many filters and full support for
+full range color. All inputs are normalized to and processed at
+the range specified by the consumer property `color_range` that defaults to
+tv/mpeg (limited).
+
+Framework
+  * Added `Mlt::Animation::next_key()` and `previous_key()` with error checking.
+  * Fixed the `moduledir` and `mltdatadir` variables in the pkg-config file.
+  * Removed calling `setlocale()` in `mlt_factory_init()` (moved to `melt`
+    option `-setlocale`).
+  * Added `mlt_properties_copy()` and `Mlt::Properties::copy()`.
+  * Changed some primarily internal property names to consolidate on "consumer."
+    as a prefix convention for all consumer properties copied to `mlt_frame`s.
+  * Added consumer property `deinterlacer` to replace deprecated `deinterlace_method`.
+  * Fixed full range color from producer to consumer.
+  * Added `mlt_slices_size_slice()` helper function.
+  * Fixed choppy playback due to large values in `frame_rate_num` or
+    `frame_rate_den` in `mlt_consumer`.
+  * Added performance optimization for a single slice in `mlt_slices`.
+
+Modules
+  * Added `audiolevelgraph` video filter to the `qt` module.
+  * Added property `segment_gap` to the `audiospectrum` video filter.
+  * Added `segments` property to the `audiolevelgraph` and `audiospectrum` filters.
+  * Fixed loading image sequence with extended UTF-8 characters in the
+    name of a folder for the `qimage` producer.
+  * Fixed a crash in `avformat` producer if the `rotate` property is set after
+    the first frame is fetched.
+  * Added the `invert_mask` property to the `shape` video filter.
+  * Changed `avformat` producer to normalize frame rates very close to
+    non-integer broadcast frames 24/1.001, 30/1.001, and 60/1.001.
+  * Converted the `chroma` and `chroma_hold` filters' `key` property to a proper
+    color type.
+  * Added slice threading to:
+    - `avformat` producer (with FFmpeg v5)
+    - `swsscale` (with FFmpeg v5)
+    - `lift_gamma_gain`
+    - `shape`
+    - `charcoal`
+    - `vignette`
+    - `wave`
+    - `threshold`
+    - `tcolor`
+    - `sepia`
+    - `mirror`
+    - `invert`
+    - `grain`
+    - `lines`
+    - `spot_remover`
+  * Improved the speed of the `oldfilm` filter.
+  * Added a faster `box_blur` filter to the core module and deprecated the
+    `boxblur` filter in the kdenlive module.
+  * Fixed preview scaling for the `avfilter.gblur` filter.
+  * Fixed incorrect text overlap in `kdenlivetitle` producer.
+  * Improved audio synchronization in `avformat` when playing in reverse.
+  * Added much more service metadata (documentation).
+  * Fixed full range 10-bit video input in `avformat` producer.
+  * Fixed full range color handling in:
+    - `avformat` producer
+    - `avcolor_space`
+    - `brightness`
+    - `resize`
+    - `luma` transition
+    - `movit.convert`
+    - `charcoal`
+    - `invert`
+    - `shape`
+  * Fixed identifying unsupported colorspaces in `avformat` producer.
+  * Fixed preserving the alpha channel in the `avfilter.fspp` filter.
+
+Other
+  - Some CMake fixes.
+  - Added `dumb-init` to the docker (no need to remember `docker run --init`).
+
+
+Version 7.4.0
+
+The main highlight of this version is property animation for avfilter!
+
+Framework
+  * Added more constructors and assignment operators in C++ wrapper:
+    - `Mlt::Filter::Filter(Mlt::Filter*)`
+    - `Mlt::Link::Link(Mlt::Link*)`
+    - `Mlt::Link::Link(Mlt::Service&)`
+    - `Mlt::Link::Link(Mlt::Link&)`
+    - `Mlt::Link::Link(Mlt::Link const&)`
+    - `Mlt::Link::operator=(Mlt::Link const&)`
+    - `Mlt::Service::Service(Mlt::Service*)`
+  * Fixed serialized animation in `mlt_animation_serialize_cut_tf()` and
+    `mlt_animation_serialize_cut()` to include a trailing keyframe value.
+
+Modules
+  * Added property animation for `avfilter` filters.
+    This only works for numeric parameters, but many libavfilter options that
+    have a type string are actually numeric in nature but accept a string
+    expression.
+  * Added `rotate` property to `avformat` producer to override orientation.
+  * Changed `jackrack` module to silence false LADSPA plugin loading errors.
+  * Fixed a crash in the `oldfilm` filter when using preview scaling.
+  * Fixed `timeremap` link distorts audio when speed is zero.
+  * Added nautical mile and knot units of measure to the `gpstext` filter.
+  * Fixed full range color handling with embedded tractor (e.g. same track
+    transition).
+  * Fixed device capture in `avformat` producer regression in version 7.2.0.
+  * Fixed a crash in the `matte` transition.
+
+
 Version 7.2.0
 
 This is the first major maintenance release for the new major version 7

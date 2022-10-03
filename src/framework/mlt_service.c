@@ -3,7 +3,7 @@
  * \brief interface definition for all service classes
  * \see mlt_service_s
  *
- * Copyright (C) 2003-2021 Meltytech, LLC
+ * Copyright (C) 2003-2022 Meltytech, LLC
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -414,11 +414,16 @@ static void mlt_service_disconnect( mlt_service self )
 
 mlt_service mlt_service_consumer( mlt_service self )
 {
-	// Get the service base
-	mlt_service_base *base = self->local;
+	if (self)
+	{
+		// Get the service base
+		mlt_service_base *base = self->local;
 
-	// Return the connected consumer
-	return base->out;
+		// Return the connected consumer
+		return base->out;
+	}
+	else
+		return self;
 }
 
 /** Obtain the producer a service is connected to.
@@ -430,11 +435,16 @@ mlt_service mlt_service_consumer( mlt_service self )
 
 mlt_service mlt_service_producer( mlt_service self )
 {
-	// Get the service base
-	mlt_service_base *base = self->local;
+	if (self)
+	{
+		// Get the service base
+		mlt_service_base *base = self->local;
 
-	// Return the connected producer
-	return base->count > 0 ? base->in[ base->count - 1 ] : NULL;
+		// Return the connected producer
+		return base->count > 0 ? base->in[ base->count - 1 ] : NULL;
+	}
+	else
+		return self;
 }
 
 /** Associate a service to a consumer.
@@ -521,6 +531,8 @@ mlt_properties mlt_service_properties( mlt_service self )
 
 void mlt_service_apply_filters( mlt_service self, mlt_frame frame, int index )
 {
+	if (!self) return;
+
 	int i;
 	mlt_properties frame_properties = MLT_FRAME_PROPERTIES( frame );
 	mlt_properties service_properties = MLT_SERVICE_PROPERTIES( self );

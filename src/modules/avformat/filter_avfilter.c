@@ -1,6 +1,6 @@
 /*
  * filter_avfilter.c -- provide various filters based on libavfilter
- * Copyright (C) 2016-2021 Meltytech, LLC
+ * Copyright (C) 2016-2022 Meltytech, LLC
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -71,12 +71,14 @@ static void property_changed(mlt_service owner, mlt_filter filter, mlt_event_dat
 	if (name && strncmp(PARAM_PREFIX, name, PARAM_PREFIX_LEN) == 0) {
 		private_data* pdata = (private_data*)filter->child;
 		if (pdata->avfilter_ctx) {
+			mlt_service_lock(MLT_FILTER_SERVICE(filter));
 			const AVOption *opt = av_opt_find( pdata->avfilter_ctx->priv, name + PARAM_PREFIX_LEN, 0, 0, 0 );
 #if LIBAVUTIL_VERSION_INT >= ((56<<16)+(35<<8)+101)
-			pdata->reset = !animatable_avoption(opt) && !mlt_properties_is_anim(MLT_FILTER_PROPERTIES(filter), name);
+			pdata->reset = opt && !(animatable_avoption(opt) && mlt_properties_is_anim(MLT_FILTER_PROPERTIES(filter), name));
 #else
 			pdata->reset = opt && !mlt_properties_is_anim(MLT_FILTER_PROPERTIES(filter), name);
 #endif
+			mlt_service_unlock(MLT_FILTER_SERVICE(filter));
 		}
 	}
 }
@@ -137,7 +139,7 @@ static void set_avfilter_options( mlt_filter filter, double scale)
 			const AVOption *opt = av_opt_find( pdata->avfilter_ctx->priv, param_name + PARAM_PREFIX_LEN, 0, 0, 0 );
 			const char* value = mlt_properties_get_value( filter_properties, i );
 #if LIBAVUTIL_VERSION_INT >= ((56<<16)+(35<<8)+101)
-			if (!animatable_avoption(opt) && !mlt_properties_is_anim(filter_properties, param_name))
+			if (opt && !(animatable_avoption(opt) && mlt_properties_is_anim(filter_properties, param_name)))
 #else
 			if (opt && !mlt_properties_is_anim(filter_properties, param_name))
 #endif
@@ -173,7 +175,7 @@ static void send_avformat_commands(mlt_filter filter, mlt_frame frame, private_d
 		if (!strncmp(name, PARAM_PREFIX, PARAM_PREFIX_LEN))
 		{
 			const AVOption *opt = av_opt_find( pdata->avfilter_ctx->priv, name + PARAM_PREFIX_LEN, 0, 0, 0 );
-			if (animatable_avoption(opt)) {
+			if (animatable_avoption(opt) && mlt_properties_is_anim(prop, name)) {
 				double x = mlt_properties_anim_get_double(prop, name, position, length);
 				if (scale != 1.0) {
 					double scale2 = mlt_properties_get_double(scale_map, opt->name);
@@ -752,13 +754,13 @@ static int filter_get_image( mlt_frame frame, uint8_t **image, mlt_image_format 
 		pdata->avinframe->height = *height;
 		pdata->avinframe->format = mlt_to_av_image_format( *format );
 		pdata->avinframe->sample_aspect_ratio = (AVRational) {
-			profile->sample_aspect_num, profile->frame_rate_den };
+			profile->sample_aspect_num, profile->sample_aspect_den };
 		pdata->avinframe->pts = pos;
 		pdata->avinframe->interlaced_frame = !mlt_properties_get_int( frame_properties, "progressive" );
 		pdata->avinframe->top_field_first = mlt_properties_get_int( frame_properties, "top_field_first" );
 		pdata->avinframe->color_primaries = mlt_properties_get_int( frame_properties, "color_primaries" );
 		pdata->avinframe->color_trc = mlt_properties_get_int( frame_properties, "color_trc" );
-		pdata->avinframe->color_range = mlt_properties_get_int( frame_properties, "full_luma" )? AVCOL_RANGE_JPEG : AVCOL_RANGE_MPEG;
+		pdata->avinframe->color_range = mlt_properties_get_int( frame_properties, "full_range" )? AVCOL_RANGE_JPEG : AVCOL_RANGE_MPEG;
 
 		switch (mlt_properties_get_int( frame_properties, "colorspace" ))
 		{

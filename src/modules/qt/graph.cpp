@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2020 Meltytech, LLC
+ * Copyright (c) 2015-2022 Meltytech, LLC
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -20,6 +20,30 @@
 #include <QPainterPath>
 #include <QVector>
 #include <math.h>
+
+QVector<QColor> get_graph_colors( mlt_properties filter_properties )
+{
+	QVector<QColor> colors;
+
+	// Find user specified colors for the gradient
+	while( true ) {
+		QString prop_name = QString("color.") + QString::number(colors.size() + 1);
+		if( mlt_properties_exists(filter_properties, prop_name.toUtf8().constData() ) ) {
+			mlt_color mcolor = mlt_properties_get_color( filter_properties, prop_name.toUtf8().constData() );
+			colors.append( QColor( mcolor.r, mcolor.g, mcolor.b, mcolor.a ) );
+		} else {
+			break;
+		}
+	}
+
+	if( colors.size() == 0 )
+	{
+		// No colors found - use a default.
+		colors.append( QColor( Qt::white ) );
+	}
+
+	return colors;
+}
 
 /*
  * Apply the "bgcolor" and "angle" parameters to the QPainter
@@ -52,27 +76,11 @@ void setup_graph_pen(QPainter& p, QRectF& r, mlt_properties filter_properties , 
 {
 	int thickness = mlt_properties_get_int( filter_properties, "thickness" ) * scale;
 	QString gorient = mlt_properties_get( filter_properties, "gorient" );
-	QVector<QColor> colors;
-	bool color_found = true;
-
+	QVector<QColor> colors = get_graph_colors( filter_properties );
 	QPen pen;
 	pen.setWidth( qAbs(thickness) );
 
-	// Find user specified colors for the gradient
-	while( color_found ) {
-		QString prop_name = QString("color.") + QString::number(colors.size() + 1);
-		if( mlt_properties_exists(filter_properties, prop_name.toUtf8().constData() ) ) {
-			mlt_color mcolor = mlt_properties_get_color( filter_properties, prop_name.toUtf8().constData() );
-			colors.append( QColor( mcolor.r, mcolor.g, mcolor.b, mcolor.a ) );
-		} else {
-			color_found = false;
-		}
-	}
-
-	if( !colors.size() ) {
-		// No color specified. Just use white.
-		pen.setBrush(Qt::white);
-	} else if ( colors.size() == 1 ) {
+	if ( colors.size() == 1 ) {
 		// Only use one color
 		pen.setBrush(colors[0]);
 	} else {
@@ -190,5 +198,40 @@ void paint_bar_graph( QPainter& p, QRectF& rect, int points, float* values )
 		p.drawLine( bottomPoint, topPoint );
 		bottomPoint.setX( bottomPoint.x() + pixelsPerPoint );
 		topPoint.setX( bottomPoint.x() );
+	}
+}
+
+void paint_segment_graph( QPainter& p, const QRectF& rect, int points, const float* values, const QVector<QColor>& colors, int segments, int segment_gap, int segment_width )
+{
+	double pixelsPerPoint = rect.width() / (double)points;
+	if (segment_width > pixelsPerPoint) {
+		segment_width = pixelsPerPoint;
+	}
+	double segment_space = pixelsPerPoint - segment_width;
+	double segmentSize = rect.height() / (double)segments;
+	if ( segment_gap >= segmentSize ) {
+		segment_gap = segmentSize - 1;
+	}
+	segmentSize = (rect.height() - ((double)segment_gap * (double)(segments - 1))) / (double)segments;
+	for( int i = 0; i < points; i++ ) {
+		QPointF bottomPoint( rect.x() + (segment_space / 2.0) + (pixelsPerPoint * (double)i), rect.y() + rect.height() );
+		QPointF topPoint( bottomPoint.x() + segment_width, bottomPoint.y() - segmentSize );
+		qreal segmentRatio = 1.0 / (qreal)segments;
+		for (int s = 0; s < segments; s++ ) {
+			int colorIndex = colors.size() - qRound((qreal)s / (qreal) segments * (qreal)colors.size()) - 1;
+			colorIndex = qBound(0, colorIndex, colors.size());
+			QColor segmentColor = colors[colorIndex];
+			qreal minSegmentValue = segmentRatio * (qreal)s;
+			qreal maxSegmentValue = segmentRatio * (qreal)(s + 1);
+			if (values[i] < minSegmentValue) {
+				break;
+			} else if (values[i] < maxSegmentValue) {
+				qreal opacity = (values[i] - minSegmentValue) / segmentRatio;
+				segmentColor.setAlphaF(opacity);
+			}
+			p.fillRect(QRectF(topPoint, bottomPoint), segmentColor);
+			bottomPoint.setY( topPoint.y() - segment_gap );
+			topPoint.setY( bottomPoint.y() - segmentSize );
+		}
 	}
 }

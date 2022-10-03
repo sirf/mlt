@@ -69,33 +69,52 @@ static int filter_get_image( mlt_frame frame, uint8_t **image, mlt_image_format 
 	}
 	double b_ar = mlt_frame_get_aspect_ratio( frame );
 	double b_dar = b_ar * b_width / b_height;
+	b_width = b_dar * b_height;
 	double opacity = 1.0;
-	bool consumerScaling = false;
 
 	if ( mlt_properties_get( properties, "rect" ) )
 	{
 		rect = mlt_properties_anim_get_rect( properties, "rect", position, length );
-		if (mlt_properties_get(properties, "rect") && ::strchr(mlt_properties_get(properties, "rect"), '%')) {
+		if (::strchr(mlt_properties_get(properties, "rect"), '%')) {
 			rect.x *= normalised_width;
 			rect.y *= normalised_height;
 			rect.w *= normalised_width;
 			rect.h *= normalised_height;
 		}
 		double scale = mlt_profile_scale_width(profile, *width);
-		if ( scale != 1.0 ) {
-			consumerScaling = true;
+		if ( scale != 1.0 )
+		{
+			rect.x *= scale;
+			rect.w *= scale;
 		}
-		rect.x *= scale;
-		rect.w *= scale;
 		scale = mlt_profile_scale_height(profile, *height);
-		if ( !consumerScaling && scale != 1.0 ) {
-			consumerScaling = true;
+		if ( scale != 1.0 )
+		{
+			rect.y *= scale;
+			rect.h *= scale;
 		}
-		rect.y *= scale;
-		rect.h *= scale;
 		transform.translate(rect.x, rect.y);
 		opacity = rect.o;
-		hasAlpha = true;
+		hasAlpha = rect.o < 1 || rect.x != 0 || rect.y != 0 || rect.w != *width || rect.h != *height;
+
+		if ( mlt_properties_get_int( properties, "distort" ) == 0 )
+		{
+			b_height = qMin( (int)rect.h, b_height );
+			b_width = b_height * b_dar / b_ar;
+		}
+		if ( !hasAlpha && ( b_width < *width || b_height < *height ) )
+		{
+			hasAlpha = true;
+		}
+	}
+	else
+	{
+		b_width = *width;
+		b_height = *height;
+		if ( b_width < normalised_width || b_height  < normalised_height )
+		{
+			hasAlpha = true;
+		}
 	}
 
 	if ( mlt_properties_get( properties, "rotation" ) )
@@ -116,8 +135,7 @@ static int filter_get_image( mlt_frame frame, uint8_t **image, mlt_image_format 
 			hasAlpha = true;
 		}
 	}
-
-	if ( !hasAlpha && ( mlt_properties_get_int( properties, "compositing" ) != 0 || b_width < *width || b_height < *height || b_width < normalised_width || b_height  < normalised_height ) )
+	if ( !hasAlpha && mlt_properties_get_int( properties, "compositing" ) != 0 )
 	{
 		hasAlpha = true;
 	}
@@ -125,9 +143,12 @@ static int filter_get_image( mlt_frame frame, uint8_t **image, mlt_image_format 
 	if ( !hasAlpha ) {
 		uint8_t *src_image = NULL;
 		error = mlt_frame_get_image( frame, &src_image, format, &b_width, &b_height, 0 );
-		if ( *format == mlt_image_rgba || mlt_frame_get_alpha( frame ) ) {
+		if ( *format == mlt_image_rgba || mlt_frame_get_alpha( frame ) )
+		{
 			hasAlpha = true;
-		} else {
+		}
+		else
+		{
 			// Prepare output image
 			*image = src_image;
 			*width = b_width;
@@ -139,14 +160,6 @@ static int filter_get_image( mlt_frame frame, uint8_t **image, mlt_image_format 
 	// fetch image
 	*format = mlt_image_rgba;
 	uint8_t *src_image = NULL;
-	
-	// Adjust if consumer is scaling
-	if ( consumerScaling )
-	{
-		// Scale request of b frame image to consumer scale maintaining its aspect ratio.
-		b_height = *height;
-		b_width = b_height * b_dar / b_ar;
-	}
 
 	error = mlt_frame_get_image( frame, &src_image, format, &b_width, &b_height, 0 );
 

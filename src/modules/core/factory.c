@@ -1,6 +1,6 @@
 /*
  * factory.c -- the factory method interfaces
- * Copyright (C) 2003-2020 Meltytech, LLC
+ * Copyright (C) 2003-2022 Meltytech, LLC
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -27,6 +27,7 @@ extern mlt_filter filter_audiochannels_init( mlt_profile profile, mlt_service_ty
 extern mlt_filter filter_audioconvert_init( mlt_profile profile, mlt_service_type type, const char *id, char *arg );
 extern mlt_filter filter_audiomap_init( mlt_profile profile, mlt_service_type type, const char *id, char *arg );
 extern mlt_filter filter_audiowave_init( mlt_profile profile, mlt_service_type type, const char *id, char *arg );
+extern mlt_filter filter_box_blur_init( mlt_profile profile, mlt_service_type type, const char *id, char *arg );
 extern mlt_filter filter_brightness_init( mlt_profile profile, mlt_service_type type, const char *id, char *arg );
 extern mlt_filter filter_channelcopy_init( mlt_profile profile, mlt_service_type type, const char *id, char *arg );
 extern mlt_filter filter_choppy_init(mlt_profile profile, mlt_service_type type, const char *id, char *arg);
@@ -42,6 +43,7 @@ extern mlt_filter filter_mirror_init( mlt_profile profile, mlt_service_type type
 extern mlt_filter filter_mono_init( mlt_profile profile, mlt_service_type type, const char *id, char *arg );
 extern mlt_filter filter_obscure_init( mlt_profile profile, mlt_service_type type, const char *id, char *arg );
 extern mlt_filter filter_panner_init( mlt_profile profile, mlt_service_type type, const char *id, char *arg );
+extern mlt_filter filter_pillar_echo_init( mlt_profile profile, mlt_service_type type, const char *id, char *arg );
 extern mlt_filter filter_rescale_init( mlt_profile profile, mlt_service_type type, const char *id, char *arg );
 extern mlt_filter filter_resize_init( mlt_profile profile, mlt_service_type type, const char *id, char *arg );
 extern mlt_filter filter_transition_init( mlt_profile profile, mlt_service_type type, const char *id, char *arg );
@@ -76,6 +78,7 @@ MLT_REPOSITORY
 	MLT_REGISTER( mlt_service_filter_type, "audioconvert", filter_audioconvert_init );
 	MLT_REGISTER( mlt_service_filter_type, "audiomap", filter_audiomap_init );
 	MLT_REGISTER( mlt_service_filter_type, "audiowave", filter_audiowave_init );
+	MLT_REGISTER( mlt_service_filter_type, "box_blur", filter_box_blur_init );
 	MLT_REGISTER( mlt_service_filter_type, "brightness", filter_brightness_init );
 	MLT_REGISTER( mlt_service_filter_type, "channelcopy", filter_channelcopy_init );
 	MLT_REGISTER( mlt_service_filter_type, "channelswap", filter_channelcopy_init );
@@ -93,6 +96,7 @@ MLT_REPOSITORY
 	MLT_REGISTER( mlt_service_filter_type, "mono", filter_mono_init );
 	MLT_REGISTER( mlt_service_filter_type, "obscure", filter_obscure_init );
 	MLT_REGISTER( mlt_service_filter_type, "panner", filter_panner_init );
+	MLT_REGISTER( mlt_service_filter_type, "pillar_echo", filter_pillar_echo_init );
 	MLT_REGISTER( mlt_service_filter_type, "rescale", filter_rescale_init );
 	MLT_REGISTER( mlt_service_filter_type, "resize", filter_resize_init );
 	MLT_REGISTER( mlt_service_filter_type, "transition", filter_transition_init );
@@ -115,8 +119,12 @@ MLT_REPOSITORY
 	MLT_REGISTER( mlt_service_transition_type, "matte", transition_matte_init );
 
 	MLT_REGISTER_METADATA( mlt_service_consumer_type, "multi", metadata, "consumer_multi.yml" );
+	MLT_REGISTER_METADATA( mlt_service_consumer_type, "null", metadata, "consumer_null.yml" );
+	MLT_REGISTER_METADATA( mlt_service_filter_type, "audiochannels", metadata, "filter_audiochannels.yml" );
+	MLT_REGISTER_METADATA( mlt_service_filter_type, "audioconvert", metadata, "filter_audioconvert.yml" );
 	MLT_REGISTER_METADATA( mlt_service_filter_type, "audiomap", metadata, "filter_audiomap.yml" );
 	MLT_REGISTER_METADATA( mlt_service_filter_type, "audiowave", metadata, "filter_audiowave.yml" );
+	MLT_REGISTER_METADATA( mlt_service_filter_type, "box_blur", metadata, "filter_box_blur.yml" );
 	MLT_REGISTER_METADATA( mlt_service_filter_type, "brightness", metadata, "filter_brightness.yml" );
 	MLT_REGISTER_METADATA( mlt_service_filter_type, "channelcopy", metadata, "filter_channelcopy.yml" );
 	MLT_REGISTER_METADATA( mlt_service_filter_type, "channelswap", metadata, "filter_channelcopy.yml" );
@@ -126,6 +134,7 @@ MLT_REPOSITORY
 	MLT_REGISTER_METADATA( mlt_service_filter_type, "gamma", metadata, "filter_gamma.yml" );
 	MLT_REGISTER_METADATA( mlt_service_filter_type, "greyscale", metadata, "filter_greyscale.yml" );
 	MLT_REGISTER_METADATA( mlt_service_filter_type, "grayscale", metadata, "filter_greyscale.yml" );
+	MLT_REGISTER_METADATA( mlt_service_filter_type, "imageconvert", metadata, "filter_imageconvert.yml" );
 	MLT_REGISTER_METADATA( mlt_service_filter_type, "luma", metadata, "filter_luma.yml" );
 	MLT_REGISTER_METADATA( mlt_service_filter_type, "mask_apply", metadata, "filter_mask_apply.yml" );
 	MLT_REGISTER_METADATA( mlt_service_filter_type, "mask_start", metadata, "filter_mask_start.yml" );
@@ -133,11 +142,13 @@ MLT_REPOSITORY
 	MLT_REGISTER_METADATA( mlt_service_filter_type, "mono", metadata, "filter_mono.yml" );
 	MLT_REGISTER_METADATA( mlt_service_filter_type, "obscure", metadata, "filter_obscure.yml" );
 	MLT_REGISTER_METADATA( mlt_service_filter_type, "panner", metadata, "filter_panner.yml" );
+	MLT_REGISTER_METADATA( mlt_service_filter_type, "pillar_echo", metadata, "filter_pillar_echo.yml" );
 	MLT_REGISTER_METADATA( mlt_service_filter_type, "rescale", metadata, "filter_rescale.yml" );
 	MLT_REGISTER_METADATA( mlt_service_filter_type, "resize", metadata, "filter_resize.yml" );
 	MLT_REGISTER_METADATA( mlt_service_filter_type, "transition", metadata, "filter_transition.yml" );
 	MLT_REGISTER_METADATA( mlt_service_filter_type, "watermark", metadata, "filter_watermark.yml" );
 	MLT_REGISTER_METADATA( mlt_service_link_type, "timeremap", metadata, "link_timeremap.yml" );
+	MLT_REGISTER_METADATA( mlt_service_producer_type, "abnormal", metadata, "producer_abnormal.yml" );
 	MLT_REGISTER_METADATA( mlt_service_producer_type, "colour", metadata, "producer_colour.yml" );
 	MLT_REGISTER_METADATA( mlt_service_producer_type, "color", metadata, "producer_colour.yml" );
 	MLT_REGISTER_METADATA( mlt_service_producer_type, "consumer", metadata, "producer_consumer.yml" );

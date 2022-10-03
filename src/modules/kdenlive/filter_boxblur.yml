@@ -1,16 +1,18 @@
-schema_version: 0.3
+schema_version: 7.0
 type: filter
 identifier: boxblur
-title: Box Blur
+title: Box Blur (*DEPRECATED*)
 version: 3
 copyright: Leny Grisel, Jean-Baptiste Mardelle
 creator: Leny Grisel, Jean-Baptiste Mardelle
 license: LGPLv2.1
 language: en
+notes: >
+    This filter is deprecated and will eventually be removed. Use the box_blur filter instead.
 tags:
   - Video
 parameters:
-  - identifier: start (*deprecated*)
+  - identifier: start (*DEPRECATED*)
     title: Size
     argument: yes
     type: integer
@@ -28,7 +30,7 @@ parameters:
     default: 2
     minimum: 1
 
-  - identifier: end (*deprecated*)
+  - identifier: end (*DEPRECATED*)
     title: End size
     type: integer
     unit: pixels
@@ -42,6 +44,7 @@ parameters:
       If this value is set the start and end parameters are ignored.
     unit: pixels
     mutable: yes
+    animation: yes
     minimum: 1
 
   - identifier: hori
@@ -49,6 +52,7 @@ parameters:
     type: integer
     unit: pixels
     mutable: yes
+    animation: yes
     minimum: 0
     default: 1
 
@@ -57,5 +61,6 @@ parameters:
     type: integer
     unit: pixels
     mutable: yes
+    animation: yes
     minimum: 0
     default: 1

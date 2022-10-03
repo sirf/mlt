@@ -1,6 +1,6 @@
 /*
- * qimage_wrapper.cpp -- a QT/QImage based producer for MLT
- * Copyright (C) 2006-2021 Meltytech, LLC
+ * qimage_wrapper.cpp -- a Qt/QImage based producer for MLT
+ * Copyright (C) 2006-2022 Meltytech, LLC
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,12 +26,16 @@
 
 #include <QImage>
 #include <QSysInfo>
+#include <QFileInfo>
+#include <QDir>
 #include <QMutex>
 #include <QtEndian>
 #include <QTemporaryFile>
 #include <QImageReader>
+#include <QMovie>
 
 #ifdef USE_EXIF
+#include <QTransform>
 #include <libexif/exif-data.h>
 #endif
 
@@ -61,7 +65,7 @@ static void qimage_delete( void *data )
 
 }
 
-/// Returns false if this is animated.
+/// Returns frame count or 0 on error
 int init_qimage(mlt_producer producer, const char *filename)
 {
 	if (!createQApplicationIfNeeded(MLT_PRODUCER_SERVICE(producer))) {
@@ -72,7 +76,7 @@ int init_qimage(mlt_producer producer, const char *filename)
 	reader.setDecideFormatFromContent( true );
 	reader.setFileName( filename );
 	if ( reader.canRead() && reader.imageCount() > 1 ) {
-		return 0;
+		return reader.format() == "webp" ? reader.imageCount() : 0;
 	}
 #ifdef USE_KDE4
 	if ( !instance ) {
@@ -105,7 +109,7 @@ static QImage* reorient_with_exif( producer_qimage self, int image_idx, QImage *
 	{
 		  // Rotate image according to exif data
 		  QImage processed;
-		  QMatrix matrix;
+		  QTransform matrix;
 
 		  switch ( exif_orientation ) {
 		  case 2:
@@ -172,13 +176,44 @@ int refresh_qimage( producer_qimage self, mlt_frame frame, int enable_caching )
 	{
 		self->current_image = NULL;
 		QImageReader reader;
+		QImage *qimage;
+
 #if QT_VERSION >= QT_VERSION_CHECK(5, 5, 0)
 		// Use Qt's orientation detection
 		reader.setAutoTransform(!disable_exif);
 #endif
+		QString filename = QString::fromUtf8( mlt_properties_get_value( self->filenames, image_idx ) );
+		if (filename.isEmpty()) {
+			filename = QString::fromUtf8(mlt_properties_get(producer_props, "resource"));
+		}
+
+		// First try to detect the file type based on the content
+		// in case the file extension is incorrect.
 		reader.setDecideFormatFromContent( true );
-		reader.setFileName( QString::fromUtf8( mlt_properties_get_value( self->filenames, image_idx ) ) );
-		QImage *qimage = new  QImage( reader.read() );
+		reader.setFileName( filename );
+		if (reader.imageCount() > 1) {
+			QMovie movie(filename);
+			movie.setCacheMode(QMovie::CacheAll);
+			movie.jumpToFrame(image_idx);
+			qimage = new QImage(movie.currentImage());
+		} else {
+			qimage = new QImage(reader.read());
+		}
+		if ( qimage->isNull( ) )
+		{
+			mlt_log_info( MLT_PRODUCER_SERVICE( &self->parent ), "QImage retry: %d - %s\n",
+					reader.error(), reader.errorString().toLatin1().data() );
+			delete qimage;
+			// If detection fails, try a more comprehensive detection including file extension
+			reader.setDecideFormatFromContent( false );
+			reader.setFileName( filename );
+			qimage = new QImage( reader.read() );
+			if ( qimage->isNull( ) )
+			{
+				mlt_log_info( MLT_PRODUCER_SERVICE( &self->parent ), "QImage fail: %d - %s\n",
+						reader.error(), reader.errorString().toLatin1().data() );
+			}
+		}
 		self->qimage = qimage;
 
 		if ( !qimage->isNull( ) )
@@ -210,6 +245,7 @@ int refresh_qimage( producer_qimage self, mlt_frame frame, int enable_caching )
 			self->current_height = qimage->height( );
 
 			mlt_events_block( producer_props, NULL );
+			mlt_properties_set_int( producer_props, "format", qimage->hasAlphaChannel() ? mlt_image_rgba : mlt_image_rgb);
 			mlt_properties_set_int( producer_props, "meta.media.width", self->current_width );
 			mlt_properties_set_int( producer_props, "meta.media.height", self->current_height );
 			mlt_properties_set_int( producer_props, "_disable_exif", disable_exif );
@@ -245,7 +281,7 @@ void refresh_image( producer_qimage self, mlt_frame frame, mlt_image_format form
 	// If we have a qimage and need a new scaled image
 	if ( self->qimage && ( !self->current_image || ( format != mlt_image_none && format != mlt_image_movit && format != self->format ) ) )
 	{
-		QString interps = mlt_properties_get( properties, "rescale.interp" );
+		QString interps = mlt_properties_get( properties, "consumer.rescale" );
 		bool interp = ( interps != "nearest" ) && ( interps != "none" );
 		QImage *qimage = static_cast<QImage*>( self->qimage );
 		int has_alpha = qimage->hasAlphaChannel();
@@ -277,7 +313,7 @@ void refresh_image( producer_qimage self, mlt_frame frame, mlt_image_format form
 
 		// Copy the image
 		int image_size;
-#if QT_VERSION >= 0x050200
+#if QT_VERSION >= QT_VERSION_CHECK(5, 2, 0)
 		if ( has_alpha )
 		{
 			self->format = mlt_image_rgba;
@@ -355,7 +391,7 @@ void refresh_image( producer_qimage self, mlt_frame frame, mlt_image_format form
 				self->current_image = (uint8_t*) mlt_pool_alloc( image_size );
 				memcpy( self->current_image, buffer, image_size );
 			}
-			if ( ( buffer = (uint8_t*) mlt_properties_get_data( properties, "alpha", &self->alpha_size ) ) )
+			if ( ( buffer = (uint8_t*) mlt_frame_get_alpha_size(frame, &self->alpha_size) ) )
 			{
                 if ( !self->alpha_size )
                     self->alpha_size = self->current_width * self->current_height;
@@ -455,6 +491,28 @@ int load_sequence_sprintf(producer_qimage self, mlt_properties properties, const
 			result = 1;
 		}
 	}
+	return result;
+}
+
+int load_folder( producer_qimage self, const char *filename )
+{
+	int result = 0;
+
+	// Obtain filenames within folder
+	if ( strstr( filename, "/.all." ) != NULL )
+	{
+		mlt_properties filename_property = self->filenames;
+		QFileInfo info( filename );
+		QDir dir = info.absoluteDir();
+		QStringList filters = {QString( "*.%1" ).arg( info.suffix() )};
+		QStringList files = dir.entryList( filters, QDir::Files, QDir::Name );
+		int key;
+		for ( auto &f : files ) {
+			key = mlt_properties_count( filename_property );
+			mlt_properties_set_string( filename_property, QString::number( key ).toLatin1(), dir.absoluteFilePath( f ).toUtf8().constData() );
+		}
+		result = 1;
+    }
 	return result;
 }
 

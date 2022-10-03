@@ -1,7 +1,5 @@
 /*
- * factory.c -- the factory method interfaces
- * Copyright (C) 2006 Visual Media
- * Author: Charles Yates <charles.yates@gmail.com>
+ * Copyright (C) 2008-2022 Meltytech, LLC
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,7 +23,10 @@
 #ifdef USE_QT_OPENGL
 extern mlt_consumer consumer_qglsl_init( mlt_profile profile, mlt_service_type type, const char *id, char *arg );
 #endif
+extern mlt_filter filter_audiolevelgraph_init( mlt_profile profile, mlt_service_type type, const char *id, char *arg );
 extern mlt_filter filter_audiowaveform_init( mlt_profile profile, mlt_service_type type, const char *id, char *arg );
+extern mlt_filter filter_gpsgraphic_init( mlt_profile profile, mlt_service_type type, const char *id, char *arg );
+extern mlt_filter filter_gpstext_init( mlt_profile profile, mlt_service_type type, const char *id, char *arg );
 extern mlt_filter filter_qtext_init( mlt_profile profile, mlt_service_type type, const char *id, char *arg );
 extern mlt_producer producer_qimage_init( mlt_profile profile, mlt_service_type type, const char *id, char *arg );
 extern mlt_producer producer_qtext_init( mlt_profile profile, mlt_service_type type, const char *id, char *arg );
@@ -53,7 +54,10 @@ MLT_REPOSITORY
 #ifdef USE_QT_OPENGL
 	MLT_REGISTER( mlt_service_consumer_type, "qglsl", consumer_qglsl_init );
 #endif
+	MLT_REGISTER( mlt_service_filter_type, "audiolevelgraph", filter_audiolevelgraph_init );
 	MLT_REGISTER( mlt_service_filter_type, "audiowaveform", filter_audiowaveform_init );
+	MLT_REGISTER( mlt_service_filter_type, "gpsgraphic", filter_gpsgraphic_init );
+	MLT_REGISTER( mlt_service_filter_type, "gpstext", filter_gpstext_init );
 	MLT_REGISTER( mlt_service_filter_type, "qtext", filter_qtext_init );
 	MLT_REGISTER( mlt_service_producer_type, "qimage", producer_qimage_init );
 	MLT_REGISTER( mlt_service_producer_type, "qtext", producer_qtext_init );
@@ -62,6 +66,7 @@ MLT_REPOSITORY
 	MLT_REGISTER( mlt_service_filter_type, "qtblend", filter_qtblend_init );
 	MLT_REGISTER( mlt_service_filter_type, "qtcrop", filter_qtcrop_init );
 	MLT_REGISTER( mlt_service_filter_type, "typewriter", filter_typewriter_init );
+	MLT_REGISTER_METADATA( mlt_service_consumer_type, "qglsl", metadata, "consumer_qglsl.yml" );
 	MLT_REGISTER_METADATA( mlt_service_transition_type, "qtblend", metadata, "transition_qtblend.yml" );
 	MLT_REGISTER_METADATA( mlt_service_filter_type, "qtblend", metadata, "filter_qtblend.yml" );
 	MLT_REGISTER_METADATA( mlt_service_filter_type, "qtcrop", metadata, "filter_qtcrop.yml" );
@@ -69,7 +74,10 @@ MLT_REPOSITORY
 	MLT_REGISTER( mlt_service_filter_type, "audiospectrum", filter_audiospectrum_init );
 	MLT_REGISTER( mlt_service_filter_type, "lightshow", filter_lightshow_init );
 #endif
+	MLT_REGISTER_METADATA( mlt_service_filter_type, "audiolevelgraph", metadata, "filter_audiolevelgraph.yml" );
 	MLT_REGISTER_METADATA( mlt_service_filter_type, "audiowaveform", metadata, "filter_audiowaveform.yml" );
+	MLT_REGISTER_METADATA( mlt_service_filter_type, "gpsgraphic", metadata, "filter_gpsgraphic.yml" );
+	MLT_REGISTER_METADATA( mlt_service_filter_type, "gpstext", metadata, "filter_gpstext.yml" );
 	MLT_REGISTER_METADATA( mlt_service_filter_type, "qtext", metadata, "filter_qtext.yml" );
 #ifdef USE_FFTW
 	MLT_REGISTER_METADATA( mlt_service_filter_type, "lightshow", metadata, "filter_lightshow.yml" );

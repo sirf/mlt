@@ -1,6 +1,6 @@
 /*
  * factory.c -- the factory method interfaces
- * Copyright (C) 2003-2020 Meltytech, LLC
+ * Copyright (C) 2003-2022 Meltytech, LLC
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -339,6 +339,7 @@ static mlt_properties avfilter_metadata( mlt_service_type type, const char *id, 
 	mlt_properties_set ( metadata, "version", LIBAVFILTER_IDENT );
 	mlt_properties_set ( metadata, "identifier" , id );
 	mlt_properties_set ( metadata, "description" , f->description );
+	mlt_properties_set ( metadata, "notes" , "Many parameters support animated values (keyframes) but only the numeric ones. Many numeric properties have type string because they accept an expression (see FFmpeg documentation) even though they evaluate to a numeric value." );
 	mlt_properties_set ( metadata, "creator" , "libavfilter maintainers" );
 	mlt_properties_set ( metadata, "type" , "filter" );
 
@@ -395,6 +396,13 @@ static mlt_properties avfilter_metadata( mlt_service_type type, const char *id, 
 }
 #endif
 
+static mlt_properties metadata( mlt_service_type type, const char *id, void *data )
+{
+	char file[ PATH_MAX ];
+	snprintf( file, PATH_MAX, "%s/avformat/%s", mlt_environment( "MLT_DATA" ), (char*) data );
+	return mlt_properties_parse_yaml( file );
+}
+
 MLT_REPOSITORY
 {
 #ifdef CODECS
@@ -403,12 +411,18 @@ MLT_REPOSITORY
 	MLT_REGISTER( mlt_service_producer_type, "avformat-novalidate", create_service );
 	MLT_REGISTER_METADATA( mlt_service_consumer_type, "avformat", avformat_metadata, NULL );
 	MLT_REGISTER_METADATA( mlt_service_producer_type, "avformat", avformat_metadata, NULL );
+	MLT_REGISTER_METADATA( mlt_service_producer_type, "avformat-novalidate", metadata, "producer_avformat-novalidate.yml" );
 #endif
 #ifdef FILTERS
 	MLT_REGISTER( mlt_service_filter_type, "avcolour_space", create_service );
 	MLT_REGISTER( mlt_service_filter_type, "avcolor_space", create_service );
 	MLT_REGISTER( mlt_service_filter_type, "avdeinterlace", create_service );
 	MLT_REGISTER( mlt_service_filter_type, "swscale", create_service );
+	MLT_REGISTER_METADATA( mlt_service_filter_type, "avcolour_space", metadata, "filter_avcolour_space.yml" );
+	MLT_REGISTER_METADATA( mlt_service_filter_type, "avcolor_space", metadata, "filter_avcolour_space.yml" );
+	MLT_REGISTER_METADATA( mlt_service_filter_type, "avdeinterlace", metadata, "filter_avdeinterlace.yml" );
+	MLT_REGISTER_METADATA( mlt_service_filter_type, "swscale", metadata, "filter_swscale.yml" );
+
 
 #ifdef AVFILTER
 	char dirname[PATH_MAX];
@@ -444,5 +458,6 @@ MLT_REPOSITORY
 #endif
 #ifdef SWRESAMPLE
 	MLT_REGISTER( mlt_service_filter_type, "swresample", create_service );
+	MLT_REGISTER_METADATA( mlt_service_filter_type, "swresample", metadata, "filter_swresample.yml" );
 #endif
 }
