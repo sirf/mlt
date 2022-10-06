@@ -30,7 +30,9 @@
 #include <signal.h>
 #include <locale.h>
 #include <sys/types.h>
+#include <sys/socket.h>
 #include <sys/stat.h>
+#include <sys/un.h>
 #include <fcntl.h>
 
 #include <framework/mlt.h>
@@ -559,7 +561,7 @@ static void write_status(JitStatus *const jit_status) {
         return;
     }
 
-    int len = jit_status__get_packed_size(jit_status) + 4;
+    int len = jit_status__get_packed_size(jit_status);
     if (buf_len < len) {
         buf = realloc(buf, len);
         if (!buf) {
@@ -569,16 +571,10 @@ static void write_status(JitStatus *const jit_status) {
         buf_len = len;
     }
 
-    char *b = buf;
-    jit_status__pack(jit_status, b + 4);
-    *((int*) b) = len - 4;
-    while (len) {
-        const int w = write(jit_status_fd, b, len);
-        if (w < 1) {
-            exit(2);
-        }
-        b += w;
-        len -= w;
+    jit_status__pack(jit_status, buf);
+	if (write(jit_status_fd, buf, len) != len) {
+		perror("write");
+		exit(1);
     }
 }
 
@@ -1181,13 +1177,21 @@ query_all:
 	// Open status pipe
 	if (status_fifo)
 	{
-		char b[100];
-		sprintf(b, "/tmp/jit-status-%lld", (long long) getppid());
-		fprintf(stdout, "Opening status pipe: %s\n", b);
-		fflush(stdout);
-		jit_status_fd = open(b, O_WRONLY);
+		jit_status_fd = socket(AF_UNIX, SOCK_DGRAM, 0);
 		if (jit_status_fd < 0) {
-			perror("open");
+			perror("socket");
+			exit(2);
+		}
+
+		struct sockaddr_un sun;
+		memset(&sun, 0, sizeof sun);
+		sun.sun_family = AF_UNIX;
+		sprintf(sun.sun_path, "/tmp/jit-status-%lld", (long long) getppid());
+		fprintf(stdout, "Opening status socket: %s\n", sun.sun_path);
+		fflush(stdout);
+
+		if (connect(jit_status_fd, (struct sockaddr *) &sun, sizeof sun) < 0) {
+			perror("connect");
 			exit(2);
 		}
 		fprintf(stdout, "Status pipe opened\n");
