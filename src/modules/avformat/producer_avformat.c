@@ -1185,10 +1185,12 @@ static int seek_video( producer_avformat self, mlt_position position,
 	int paused = 0;
 	int seek_threshold = mlt_properties_get_int( properties, "seek_threshold" );
 	if ( seek_threshold <= 0 ) seek_threshold = 12;
+	// intra only -> always seek to exactly where we need to be
+	int intra_only = self->video_codec->codec_descriptor->props & AV_CODEC_PROP_INTRA_ONLY;
 
 	pthread_mutex_lock( &self->packets_mutex );
 
-	if ( self->video_seekable && ( position != self->video_expected || self->last_position < 0 ) )
+	if ( self->video_seekable && (( position != self->video_expected || self->last_position < 0 ) || intra_only) )
 	{
 
 		// Fetch the video format context
@@ -1206,7 +1208,7 @@ static int seek_video( producer_avformat self, mlt_position position,
 			// We're paused - use last image
 			paused = 1;
 		}
-		else if ( position < self->video_expected || position - self->video_expected >= seek_threshold || self->last_position < 0 )
+		else if ( position < self->video_expected || position - self->video_expected >= seek_threshold || self->last_position < 0 || intra_only )
 		{
 			// Calculate the timestamp for the requested frame
 			int64_t timestamp = req_position / ( av_q2d( self->video_time_base ) * source_fps );
