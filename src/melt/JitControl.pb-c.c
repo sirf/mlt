@@ -116,24 +116,26 @@ const ProtobufCMessageDescriptor jit_control__descriptor =
   (ProtobufCMessageInit) jit_control__init,
   NULL,NULL,NULL    /* reserved[123] */
 };
-static const ProtobufCEnumValue control_type__enum_values_by_number[5] =
+static const ProtobufCEnumValue control_type__enum_values_by_number[6] =
 {
   { "PAUSE", "CONTROL_TYPE__PAUSE", 0 },
   { "PLAY", "CONTROL_TYPE__PLAY", 1 },
   { "PLAY_RATE", "CONTROL_TYPE__PLAY_RATE", 2 },
   { "QUIT", "CONTROL_TYPE__QUIT", 3 },
   { "SEEK", "CONTROL_TYPE__SEEK", 4 },
+  { "SEEK_REL", "CONTROL_TYPE__SEEK_REL", 5 },
 };
 static const ProtobufCIntRange control_type__value_ranges[] = {
-{0, 0},{0, 5}
+{0, 0},{0, 6}
 };
-static const ProtobufCEnumValueIndex control_type__enum_values_by_name[5] =
+static const ProtobufCEnumValueIndex control_type__enum_values_by_name[6] =
 {
   { "PAUSE", 0 },
   { "PLAY", 1 },
   { "PLAY_RATE", 2 },
   { "QUIT", 3 },
   { "SEEK", 4 },
+  { "SEEK_REL", 5 },
 };
 const ProtobufCEnumDescriptor control_type__descriptor =
 {
@@ -142,9 +144,9 @@ const ProtobufCEnumDescriptor control_type__descriptor =
   "ControlType",
   "ControlType",
   "",
-  5,
+  6,
   control_type__enum_values_by_number,
-  5,
+  6,
   control_type__enum_values_by_name,
   1,
   control_type__value_ranges,
