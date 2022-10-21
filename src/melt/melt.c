@@ -20,6 +20,7 @@
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE
 #endif
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -617,6 +618,19 @@ static void transport( mlt_producer producer, mlt_consumer consumer )
 */
 		}
 
+		// frame rate multiplier
+		double fps_multiplier;
+		{
+			const double pnum = mlt_properties_get_int(MLT_PRODUCER_PROPERTIES(producer), "frame_rate_num");
+			const double pden = mlt_properties_get_int(MLT_PRODUCER_PROPERTIES(producer), "frame_rate_den");
+			const double cnum = mlt_properties_get_int(MLT_CONSUMER_PROPERTIES(consumer), "frame_rate_num");
+			const double cden = mlt_properties_get_int(MLT_CONSUMER_PROPERTIES(consumer), "frame_rate_den");
+			fps_multiplier = (cnum * pden) / (pnum * cden);
+			if (fps_multiplier != 1) {
+				fprintf(stderr, "fps_multiplier: %f\n", fps_multiplier);
+			}
+		}
+
 		while( mlt_properties_get_int( properties, "done" ) == 0 && !mlt_consumer_is_stopped( consumer ) )
 		{
 
@@ -696,7 +710,7 @@ static void transport( mlt_producer producer, mlt_consumer consumer )
 				jit_status.has_play_rate = 1;
 				jit_status.play_rate = mlt_producer_get_speed(producer);
 				jit_status.has_position = 1;
-				jit_status.position = mlt_producer_position(producer);
+				jit_status.position = llround(mlt_producer_position(producer) / fps_multiplier);
 
                 write_status(&jit_status);
                 last_position = jit_status.position;
