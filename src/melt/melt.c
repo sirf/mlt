@@ -625,6 +625,7 @@ static void transport( mlt_producer producer, mlt_consumer consumer )
 			const double pden = mlt_properties_get_int(MLT_PRODUCER_PROPERTIES(producer), "frame_rate_den");
 			const double cnum = mlt_properties_get_int(MLT_CONSUMER_PROPERTIES(consumer), "frame_rate_num");
 			const double cden = mlt_properties_get_int(MLT_CONSUMER_PROPERTIES(consumer), "frame_rate_den");
+			fprintf(stderr, "%f / %f\n%f / %f\n", pnum, pden, cnum, cden);
 			fps_multiplier = (cnum * pden) / (pnum * cden);
 			if (fps_multiplier != 1) {
 				fprintf(stderr, "fps_multiplier: %f\n", fps_multiplier);
