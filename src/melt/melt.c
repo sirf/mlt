@@ -120,7 +120,7 @@ static void transport_action( mlt_producer producer, char *value )
 			fire_jack_seek_event(jack,  llround(fps_multiplier * jit_control->seek_position));
 			break;
 		case CONTROL_TYPE__SEEK_REL:
-			const mlt_position pos = mlt_producer_position(producer) + jit_control->seek_position;
+			const mlt_position pos = mlt_producer_position(producer) + ceil(fps_multiplier * jit_control->seek_position);
 			mlt_consumer_purge( consumer );
 			mlt_producer_seek( producer, pos);
 			fire_jack_seek_event(jack, pos);
