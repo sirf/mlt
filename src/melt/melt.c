@@ -49,6 +49,7 @@
 static mlt_producer melt = NULL;
 static JitStatus jit_status = JIT_STATUS__INIT;
 static int jit_status_fd = -1;
+static double fps_multiplier;
 
 static void stop_handler(int signum)
 {
@@ -115,8 +116,8 @@ static void transport_action( mlt_producer producer, char *value )
 
 		case CONTROL_TYPE__SEEK:
 			mlt_consumer_purge( consumer );
-			mlt_producer_seek( producer, jit_control->seek_position);
-			fire_jack_seek_event(jack, jit_control->seek_position);
+			mlt_producer_seek( producer, llround(fps_multiplier * jit_control->seek_position));
+			fire_jack_seek_event(jack,  llround(fps_multiplier * jit_control->seek_position));
 			break;
 		case CONTROL_TYPE__SEEK_REL:
 			const mlt_position pos = mlt_producer_position(producer) + jit_control->seek_position;
@@ -619,7 +620,6 @@ static void transport( mlt_producer producer, mlt_consumer consumer )
 		}
 
 		// frame rate multiplier
-		double fps_multiplier;
 		if (jit_status.has_frame_rate) {
 			const int num = mlt_properties_get_int(MLT_CONSUMER_PROPERTIES(consumer), "frame_rate_num");
 			const int den = mlt_properties_get_int(MLT_CONSUMER_PROPERTIES(consumer), "frame_rate_den");
@@ -702,7 +702,7 @@ static void transport( mlt_producer producer, mlt_consumer consumer )
                 */
                 // MOFF
 				jit_status.has_duration = 1;
-				jit_status.duration = mlt_producer_get_length(producer);
+				jit_status.duration = llround(mlt_producer_get_length(producer) / fps_multiplier);
 				//jit_status.has_frame_rate = 1;
 				//jit_status.frame_rate = mlt_producer_get_fps(producer);
 				jit_status.has_play_rate = 1;
