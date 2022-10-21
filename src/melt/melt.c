@@ -620,10 +620,10 @@ static void transport( mlt_producer producer, mlt_consumer consumer )
 
 		// frame rate multiplier
 		double fps_multiplier;
-		{
-			const double cnum = mlt_properties_get_int(MLT_CONSUMER_PROPERTIES(consumer), "frame_rate_num");
-			const double cden = mlt_properties_get_int(MLT_CONSUMER_PROPERTIES(consumer), "frame_rate_den");
-			fps_multiplier = (mlt_producer_get_fps(producer) * cden) / cnum;
+		if (jit_status.has_frame_rate) {
+			const int num = mlt_properties_get_int(MLT_CONSUMER_PROPERTIES(consumer), "frame_rate_num");
+			const int den = mlt_properties_get_int(MLT_CONSUMER_PROPERTIES(consumer), "frame_rate_den");
+			fps_multiplier = num / (jit_status.frame_rate * den);
 			if (fps_multiplier != 1) {
 				fprintf(stderr, "fps_multiplier: %f\n", fps_multiplier);
 			}
@@ -703,8 +703,8 @@ static void transport( mlt_producer producer, mlt_consumer consumer )
                 // MOFF
 				jit_status.has_duration = 1;
 				jit_status.duration = mlt_producer_get_length(producer);
-				jit_status.has_frame_rate = 1;
-				jit_status.frame_rate = mlt_producer_get_fps(producer);
+				//jit_status.has_frame_rate = 1;
+				//jit_status.frame_rate = mlt_producer_get_fps(producer);
 				jit_status.has_play_rate = 1;
 				jit_status.play_rate = mlt_producer_get_speed(producer);
 				jit_status.has_position = 1;
@@ -1330,6 +1330,15 @@ query_all:
 			}
 		} else if (!strcmp(value, "video")) {
 			s->type = STREAM_TYPE__VIDEO;
+			s->video = calloc(1, sizeof (VideoStream));
+			video_stream__init(s->video);
+			sprintf(key, "meta.media.%d.stream.frame_rate", i);
+			s->video->has_frame_rate = 1;
+			s->video->frame_rate = mlt_properties_get_double(MLT_PRODUCER_PROPERTIES(av), key);
+			if (!jit_status.has_frame_rate) {
+				jit_status.has_frame_rate = 1;
+				jit_status.frame_rate = s->video->frame_rate;
+			}
 		}
 	}
 	//dump_properties(av);
