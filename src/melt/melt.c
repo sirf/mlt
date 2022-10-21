@@ -92,9 +92,9 @@ static void transport_action( mlt_producer producer, char *value )
 				mlt_consumer_purge( consumer );
 				if (jit_status.playing) {
 					if (jit_control->has_seek_position) {
-						mlt_producer_seek( producer, jit_control->seek_position);
+						mlt_producer_seek( producer, llround(fps_multiplier * jit_control->seek_position));
 					} else {
-						mlt_producer_seek( producer, mlt_consumer_position( consumer ) - 2 );
+						//mlt_producer_seek( producer, mlt_consumer_position( consumer ) - 2 );
 					}
 				}
 			}
