@@ -27,6 +27,8 @@ message AudioStream {
 
 message VideoStream {
     optional double frame_rate = 1;
+    optional int32 width = 2;
+    optional int32 height = 3;
 }
 
 enum StreamType {

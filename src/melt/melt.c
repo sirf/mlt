@@ -1322,11 +1322,7 @@ query_all:
 			sprintf(key, "meta.attr.%d.stream.language.markup", i);
 			value = mlt_properties_get(MLT_PRODUCER_PROPERTIES(av), key);
 			if (value) {
-				//int l = strlen(value);
-				//s->audio->language.len = l;
-				//s->audio->language.data = calloc(1, l + 1);
 				s->audio->language = strdup(value);
-				//strcpy(s->audio->language.data, value);
 			}
 		} else if (!strcmp(value, "video")) {
 			s->type = STREAM_TYPE__VIDEO;
@@ -1339,6 +1335,12 @@ query_all:
 				jit_status.has_frame_rate = 1;
 				jit_status.frame_rate = s->video->frame_rate;
 			}
+			sprintf(key, "meta.media.%d.codec.width", i);
+			s->video->has_width = 1;
+			s->video->width = mlt_properties_get_int(MLT_PRODUCER_PROPERTIES(av), key);
+			sprintf(key, "meta.media.%d.codec.height", i);
+			s->video->has_height = 1;
+			s->video->height = mlt_properties_get_int(MLT_PRODUCER_PROPERTIES(av), key);
 		}
 	}
 	//dump_properties(av);
