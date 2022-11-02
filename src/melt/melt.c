@@ -80,7 +80,7 @@ static void transport_action( mlt_producer producer, char *value )
 	mlt_multitrack multitrack = mlt_properties_get_data( properties, "multitrack", NULL );
 	mlt_consumer consumer = mlt_properties_get_data( properties, "transport_consumer", NULL );
 	mlt_properties jack = mlt_properties_get_data( MLT_CONSUMER_PROPERTIES( consumer ), "jack_filter", NULL );
-	mlt_position position = producer? mlt_producer_position( producer ) : 0;
+	mlt_position position = producer ? mlt_producer_position( producer ) : 0;
 
 	mlt_properties_set_int( properties, "stats_off", 1 );
 
@@ -682,44 +682,24 @@ static void transport( mlt_producer producer, mlt_consumer consumer )
 
 			if ( !silent && mlt_properties_get_int( properties, "stats_off" ) == 0 )
 			{
-                /*
-				if ( progress )
-				{
-					int current_position = mlt_producer_position( producer );
-					if ( current_position > last_position )
-					{
-						fprintf( stderr, "Current Frame: %10d, percentage: %10d%c",
-							current_position, 100 * current_position / total_length,
-							progress == 2 ? '\n' : '\r' );
-						last_position = current_position;
-					}
-				}
-				else
-				{
-					fprintf( stderr, "Current Position: %10d\r", (int)mlt_consumer_position( consumer ) );
-				}
-				fflush( stderr );
-                */
-                // MOFF
 				jit_status.has_duration = 1;
 				jit_status.duration = llround(mlt_producer_get_length(producer) / fps_multiplier);
-				//jit_status.has_frame_rate = 1;
-				//jit_status.frame_rate = mlt_producer_get_fps(producer);
 				jit_status.has_play_rate = 1;
 				jit_status.play_rate = mlt_producer_get_speed(producer);
 				jit_status.has_position = 1;
 				jit_status.position = llround(mlt_producer_position(producer) / fps_multiplier);
+				if (jit_status.play_rate < 0 && jit_status.position == 0) {
+					mlt_producer_set_speed( producer, 0 );
+					mlt_consumer_purge( consumer );
+					//mlt_producer_seek( producer, 0);
+					jit_status.play_rate = 0;
+					jit_status.position = 0;
+				}
 
                 write_status(&jit_status);
                 last_position = jit_status.position;
 			}
-
-			//if ( silent || progress )
-				//nanosleep( &tm, NULL );
 		}
-
-		//if ( !silent )
-			//fprintf( stderr, "\n" );
 	}
 }
 
