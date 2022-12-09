@@ -1279,6 +1279,12 @@ query_all:
 	media_info__init(jit_status.media_info);
 	jit_status.media_info->n_streams = mlt_properties_get_int(MLT_PRODUCER_PROPERTIES(av), "meta.media.nb_streams");
 	jit_status.media_info->streams = calloc(jit_status.media_info->n_streams, sizeof (Stream*));
+	const int frame_rate_num = mlt_properties_get_int(MLT_PRODUCER_PROPERTIES(av), "meta.media.frame_rate_num");
+	const int frame_rate_den = mlt_properties_get_int(MLT_PRODUCER_PROPERTIES(av), "meta.media.frame_rate_den");
+	if (frame_rate_num > 0 && frame_rate_den > 0) {
+		jit_status.has_frame_rate = 1;
+		jit_status.frame_rate = ((double) frame_rate_num) / ((double) frame_rate_den);
+	}
 	for (int i = 0; i < jit_status.media_info->n_streams; i++) {
 		Stream *s = calloc(sizeof (Stream), 1);
 		stream__init(s);
