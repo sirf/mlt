@@ -1271,7 +1271,7 @@ query_all:
 
 	// video is paused initially
 	jit_status.has_playing = 1;
-	jit_status.playing = 0;
+	jit_status.playing = status_fifo ? 0 : 1; // play automatically when status fifo is disabled
 
 	// media info
 	mlt_producer av = find_producer_avformat(melt);
@@ -1417,9 +1417,11 @@ query_all:
 				signal( SIGPIPE, stop_handler );
 #endif
 
-				// start in paused state
-				mlt_producer_set_speed( melt, 0 );
-				mlt_producer_seek( melt, 0 );
+				// start in paused state?
+				if (!jit_status.playing) {
+					mlt_producer_set_speed( melt, 0 );
+					mlt_producer_seek( melt, 0 );
+				}
 
 				// Transport functionality
 				transport( melt, consumer );
