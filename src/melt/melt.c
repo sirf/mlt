@@ -120,11 +120,13 @@ static void transport_action( mlt_producer producer, char *value )
 			fire_jack_seek_event(jack,  llround(fps_multiplier * jit_control->seek_position));
 			break;
 		case CONTROL_TYPE__SEEK_REL:
+        {
 			const mlt_position pos = mlt_producer_position(producer) + (jit_control->seek_position < 0 ? floor(fps_multiplier * jit_control->seek_position) : ceil(fps_multiplier * jit_control->seek_position));
 			mlt_consumer_purge( consumer );
 			mlt_producer_seek( producer, pos);
 			fire_jack_seek_event(jack, pos);
 			break;
+        }
 		case CONTROL_TYPE__QUIT:
 			mlt_properties_set_int( properties, "done", 1 );
 			mlt_events_fire( jack, "jack-stop", mlt_event_data_none() );
