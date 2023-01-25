@@ -1359,7 +1359,7 @@ static int pick_av_pixel_format( int *pix_fmt )
 
 struct sliced_pix_fmt_conv_t
 {
-	int width, height, slice_w;
+	int width, height, slice_h;
 	AVFrame *frame;
 	uint8_t *out_data[4];
 	int out_stride[4];
@@ -1373,7 +1373,7 @@ static int sliced_h_pix_fmt_conv_proc( int id, int idx, int jobs, void* cookie )
 	uint8_t *out[4];
 	const uint8_t *in[4];
 	int in_stride[4], out_stride[4];
-	int src_v_chr_pos = -513, dst_v_chr_pos = -513, ret, i, slice_x, slice_w, h, mul, field, slices, interlaced = 0;
+	int src_v_chr_pos = -513, dst_v_chr_pos = -513, ret, i, slice_y, slice_h, h, mul, field, slices, interlaced = 0;
 
 	struct SwsContext *sws;
 	struct sliced_pix_fmt_conv_t* ctx = ( struct sliced_pix_fmt_conv_t* )cookie;
@@ -1384,9 +1384,9 @@ static int sliced_h_pix_fmt_conv_proc( int id, int idx, int jobs, void* cookie )
 	slices = ( interlaced ) ? ( jobs / 2 ) : jobs;
 	mul = ( interlaced ) ? 2 : 1;
 	h = ctx->height >> !!interlaced;
-	slice_w = ctx->slice_w;
-	slice_x = slice_w * idx;
-	slice_w = FFMIN( slice_w, ctx->width - slice_x );
+	slice_h = ctx->slice_h;
+	slice_y = slice_h * idx;
+	slice_h = FFMIN( slice_h, ctx->height - slice_y );
 
 	if ( AV_PIX_FMT_YUV420P == ctx->src_format )
 		src_v_chr_pos = ( !interlaced ) ? 128 : ( !field ) ? 64 : 192;
@@ -1394,19 +1394,19 @@ static int sliced_h_pix_fmt_conv_proc( int id, int idx, int jobs, void* cookie )
 	if ( AV_PIX_FMT_YUV420P == ctx->dst_format )
 		dst_v_chr_pos = ( !interlaced ) ? 128 : ( !field ) ? 64 : 192;
 
-	mlt_log_debug( NULL, "%s:%d: [id=%d, idx=%d, jobs=%d], interlaced=%d, field=%d, slices=%d, mul=%d, h=%d, slice_w=%d, slice_x=%d ctx->src_desc=[log2_chroma_h=%d, log2_chroma_w=%d], src_v_chr_pos=%d, dst_v_chr_pos=%d\n",
-		__FUNCTION__, __LINE__, id, idx, jobs, interlaced, field, slices, mul, h, slice_w, slice_x, ctx->src_desc->log2_chroma_h, ctx->src_desc->log2_chroma_w, src_v_chr_pos, dst_v_chr_pos );
+	mlt_log_debug( NULL, "%s:%d: [id=%d, idx=%d, jobs=%d], interlaced=%d, field=%d, slices=%d, mul=%d, h=%d, slice_h=%d, slice_y=%d ctx->src_desc=[log2_chroma_h=%d, log2_chroma_w=%d], src_v_chr_pos=%d, dst_v_chr_pos=%d\n",
+		__FUNCTION__, __LINE__, id, idx, jobs, interlaced, field, slices, mul, h, slice_h, slice_y, ctx->src_desc->log2_chroma_h, ctx->src_desc->log2_chroma_w, src_v_chr_pos, dst_v_chr_pos );
 
-	if ( slice_w <= 0 )
+	if ( slice_h <= 0 )
 		return 0;
 
 	sws = sws_alloc_context();
 
-	av_opt_set_int( sws, "srcw", slice_w, 0 );
-	av_opt_set_int( sws, "srch", h, 0 );
+	av_opt_set_int( sws, "srcw", ctx->width, 0 );
+	av_opt_set_int( sws, "srch", slice_h, 0 );
 	av_opt_set_int( sws, "src_format", ctx->src_format, 0 );
-	av_opt_set_int( sws, "dstw", slice_w, 0 );
-	av_opt_set_int( sws, "dsth", h, 0 );
+	av_opt_set_int( sws, "dstw", ctx->width, 0 );
+	av_opt_set_int( sws, "dsth", slice_h, 0 );
 	av_opt_set_int( sws, "dst_format", ctx->dst_format, 0 );
 	av_opt_set_int( sws, "sws_flags", ctx->flags, 0 );
 
@@ -1428,25 +1428,14 @@ static int sliced_h_pix_fmt_conv_proc( int id, int idx, int jobs, void* cookie )
 
 	for( i = 0; i < 4; i++ )
 	{
-		int in_offset = (AV_PIX_FMT_FLAG_PLANAR & ctx->src_desc->flags)
-			? ( ( 1 == i || 2 == i ) ? ( slice_x >> ctx->src_desc->log2_chroma_w ) : slice_x )
-			: ( ( 0 == i ) ? slice_x : 0 );
-
-		int out_offset = (AV_PIX_FMT_FLAG_PLANAR & ctx->dst_desc->flags)
-			? ( ( 1 == i || 2 == i ) ? ( slice_x >> ctx->dst_desc->log2_chroma_w ) : slice_x )
-			: ( ( 0 == i ) ? slice_x : 0 );
-
-		in_offset *= PIX_DESC_BPP(ctx->src_desc->comp[i]);
-		out_offset *= PIX_DESC_BPP(ctx->dst_desc->comp[i]);
-
 		in_stride[i]  = ctx->frame->linesize[i] * mul;
 		out_stride[i] = ctx->out_stride[i] * mul;
 
-		in[i] =  ctx->frame->data[i] + ctx->frame->linesize[i] * field + in_offset;
-		out[i] = ctx->out_data[i] + ctx->out_stride[i] * field + out_offset;
+		in[i] =  ctx->frame->data[i] + ctx->frame->linesize[i] * (field + slice_y * mul);
+		out[i] = ctx->out_data[i] + ctx->out_stride[i] * (field + slice_y * mul);
 	}
 
-	sws_scale( sws, in, in_stride, 0, h, out, out_stride );
+	sws_scale( sws, in, in_stride, 0, slice_h, out, out_stride );
 
 	sws_freeContext( sws );
 
@@ -1557,22 +1546,22 @@ static int convert_image( producer_avformat self, AVFrame *frame, uint8_t *buffe
 
 		int sliced = !getenv("MLT_AVFORMAT_SLICED_PIXFMT_DISABLE") && src_pix_fmt != ctx.dst_format;
 		if ( sliced ) {
-			ctx.slice_w = ( width < 1000 )
+			ctx.slice_h = ( height < 1000 )
 				? ( 256 >> frame->interlaced_frame )
 				: ( 512 >> frame->interlaced_frame );
 		} else {
-			ctx.slice_w = width;
+			ctx.slice_h = height;
 		}
 
-		c = ( width + ctx.slice_w - 1 ) / ctx.slice_w;
-		int last_slice_w = width - ctx.slice_w * (c - 1);
+		c = ( height + ctx.slice_h - 1 ) / ctx.slice_h;
+		int last_slice_h = width - ctx.slice_h * (c - 1);
 
-		if ( sliced && (last_slice_w % 8) == 0 && !(ctx.src_format == AV_PIX_FMT_YUV422P && last_slice_w % 16) ) {
+		if ( sliced && (last_slice_h % 8) == 0 && !(ctx.src_format == AV_PIX_FMT_YUV422P && last_slice_h % 16) ) {
 			c *= frame->interlaced_frame ? 2 : 1;
 			mlt_slices_run_normal( c, sliced_h_pix_fmt_conv_proc, &ctx );
 		} else {
 			c = frame->interlaced_frame ? 2 : 1;
-			ctx.slice_w = width;
+			ctx.slice_h = height;
 			for ( i = 0 ; i < c; i++ )
 				sliced_h_pix_fmt_conv_proc( i, i, c, &ctx );
 		}
