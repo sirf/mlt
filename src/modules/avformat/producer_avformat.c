@@ -531,7 +531,7 @@ static void get_aspect_ratio( mlt_properties properties, AVStream *stream, AVCod
 	mlt_properties_set_double( properties, "aspect_ratio", av_q2d( sar ) );
 }
 
-static char* parse_url( mlt_profile profile, const char* URL, const AVInputFormat **format, AVDictionary **params )
+static char* parse_url( mlt_profile profile, const char* URL, AVInputFormat **format, AVDictionary **params )
 {
 	(void) profile; // unused
 	if ( !URL ) return NULL;
@@ -760,12 +760,16 @@ static int get_basic_info( producer_avformat self, mlt_profile profile, const ch
 		mlt_properties_set_int( properties, "height", codec_params->height );
 		get_aspect_ratio( properties, format->streams[ self->video_index ], codec_params );
 
+#ifdef AVFILTER
+		int pix_fmt = self->vfilter_out ? av_buffersink_get_format(self->vfilter_out) : codec_params->format;
+#else
 		int pix_fmt = codec_params->format;
+#endif
 		pick_av_pixel_format( &pix_fmt );
 		if ( pix_fmt != AV_PIX_FMT_NONE ) {
 			// Verify that we can convert this to one of our image formats.
 			struct SwsContext *context = sws_getContext( codec_params->width, codec_params->height, pix_fmt,
-				codec_params->width, codec_params->height, pick_pix_fmt( codec_params->format ), SWS_BILINEAR, NULL, NULL, NULL);
+				codec_params->width, codec_params->height, pick_pix_fmt( pix_fmt ), SWS_BILINEAR, NULL, NULL, NULL);
 			if ( context )
 			{
 				sws_freeContext( context );
@@ -807,11 +811,6 @@ static int setup_video_filters( producer_avformat self )
 	if (result >= 0) {
 		result = avfilter_graph_create_filter(&self->vfilter_out, avfilter_get_by_name("buffersink"),
 			"mlt_buffersink", NULL, NULL, self->vfilter_graph);
-
-		if (result >= 0) {
-			enum AVPixelFormat pix_fmts[] = { codec_params->format, AV_PIX_FMT_NONE };
-			result = av_opt_set_int_list(self->vfilter_out, "pix_fmts", pix_fmts, AV_PIX_FMT_NONE, AV_OPT_SEARCH_CHILDREN);
-		}
 	}
 
 	return result;
@@ -830,32 +829,55 @@ static int insert_filter(AVFilterGraph *graph, AVFilterContext **last_filter, co
 	return result;
 }
 
-static int setup_autorotate_filters(producer_avformat self)
+static int setup_filters(producer_avformat self)
 {
 	int error = 0;
+	mlt_properties properties = MLT_PRODUCER_PROPERTIES( self->parent );
+	const char *filtergraph = mlt_properties_get(properties, "filtergraph");
 
-	if (!self->vfilter_graph && self->autorotate && self->video_index != -1) {
-		mlt_properties properties = MLT_PRODUCER_PROPERTIES(self->parent);
-		double theta  = get_rotation(properties, self->video_format->streams[self->video_index]);
+	if (!self->vfilter_graph && (self->autorotate || filtergraph) && self->video_index != -1) {
+		AVFilterContext *last_filter = NULL;
+		if (self->autorotate) {
+			mlt_properties properties = MLT_PRODUCER_PROPERTIES(self->parent);
+			double theta  = get_rotation(properties, self->video_format->streams[self->video_index]);
 
-		if (fabs(theta - 90) < 1.0) {
-			error = ( setup_video_filters(self) < 0 );
-			AVFilterContext *last_filter = self->vfilter_out;
-			if (!error) error = ( insert_filter(self->vfilter_graph, &last_filter, "transpose", "clock") < 0 );
-			if (!error) error = ( avfilter_link(self->vfilter_in, 0, last_filter, 0) < 0 );
-			if (!error) error = ( avfilter_graph_config(self->vfilter_graph, NULL) < 0 );
-		} else if (fabs(theta - 180) < 1.0) {
-			error = ( setup_video_filters(self) < 0 );
-			AVFilterContext *last_filter = self->vfilter_out;
-			if (!error) error = ( insert_filter(self->vfilter_graph, &last_filter, "hflip", NULL) < 0 );
-			if (!error) error = ( insert_filter(self->vfilter_graph, &last_filter, "vflip", NULL) < 0 );
-			if (!error) error = ( avfilter_link(self->vfilter_in, 0, last_filter, 0) < 0 );
-			if (!error) error = ( avfilter_graph_config(self->vfilter_graph, NULL) < 0 );
-		} else if (fabs(theta - 270) < 1.0) {
-			error = ( setup_video_filters(self) < 0 );
-			AVFilterContext *last_filter = self->vfilter_out;
-			if (!error) error = ( insert_filter(self->vfilter_graph, &last_filter, "transpose", "cclock") < 0 );
-			if (!error) error = ( avfilter_link(self->vfilter_in, 0, last_filter, 0) < 0 );
+			if (fabs(theta - 90) < 1.0) {
+				error = ( setup_video_filters(self) < 0 );
+				last_filter = self->vfilter_out;
+				if (!error) error = ( insert_filter(self->vfilter_graph, &last_filter, "transpose", "clock") < 0 );
+			} else if (fabs(theta - 180) < 1.0)		{
+				error = ( setup_video_filters(self) < 0 );
+				last_filter = self->vfilter_out;
+				if (!error) error = ( insert_filter(self->vfilter_graph, &last_filter, "hflip", NULL) < 0 );
+				if (!error) error = ( insert_filter(self->vfilter_graph, &last_filter, "vflip", NULL) < 0 );
+			} else if (fabs(theta - 270) < 1.0) {
+				error = ( setup_video_filters(self) < 0 );
+				last_filter = self->vfilter_out;
+				if (!error) error = ( insert_filter(self->vfilter_graph, &last_filter, "transpose", "cclock") < 0 );
+			}
+		}
+		if (filtergraph && !error) {
+			if (!self->vfilter_graph) {
+				error = ( setup_video_filters(self) < 0 );
+				last_filter = self->vfilter_out;
+			}
+			AVFilterInOut *outputs = avfilter_inout_alloc();
+			AVFilterInOut *inputs  = avfilter_inout_alloc();
+
+			outputs->name = av_strdup("in");
+			outputs->filter_ctx = self->vfilter_in;
+			outputs->pad_idx = 0;
+			outputs->next = NULL;
+
+			inputs->name = av_strdup("out");
+			inputs->filter_ctx = last_filter;
+			inputs->pad_idx = 0;
+			inputs->next = NULL;
+
+			if (!error) error = (avfilter_graph_parse(self->vfilter_graph, filtergraph, inputs, outputs, NULL) < 0);
+		}
+		if (self->vfilter_graph) {
+			if (!error && !filtergraph) error = ( avfilter_link(self->vfilter_in, 0, last_filter, 0) < 0 );
 			if (!error) error = ( avfilter_graph_config(self->vfilter_graph, NULL) < 0 );
 		}
 	}
@@ -1019,7 +1041,7 @@ static int producer_open(producer_avformat self, mlt_profile profile, const char
 #ifdef AVFILTER
 				if (!test_open) {
 					self->autorotate = !mlt_properties_get(properties, "autorotate") || mlt_properties_get_int(properties, "autorotate");
-					error = setup_autorotate_filters(self);
+					error = setup_filters(self);
 				}
 #endif
 			}
@@ -1586,6 +1608,12 @@ static int convert_image( producer_avformat self, AVFrame *frame, uint8_t *buffe
 
 static void set_image_size( producer_avformat self, int *width, int *height )
 {
+#ifdef AVFILTER
+	if (self->vfilter_out) {
+		*width = av_buffersink_get_w(self->vfilter_out);
+		*height = av_buffersink_get_h(self->vfilter_out);
+	}
+#else
 	double dar = mlt_profile_dar( mlt_service_profile( MLT_PRODUCER_SERVICE(self->parent) ) );
 	double theta  = self->autorotate? get_rotation( MLT_PRODUCER_PROPERTIES(self->parent), self->video_format->streams[self->video_index] ) : 0.0;
 	if ( fabs(theta - 90.0) < 1.0 || fabs(theta - 270.0) < 1.0 )
@@ -1604,6 +1632,7 @@ static void set_image_size( producer_avformat self, int *width, int *height )
 		else
 			*height = self->video_codec->height;
 	}
+#endif
 }
 
 /** Allocate the image buffer and set it on the frame.
@@ -1748,7 +1777,11 @@ static int producer_get_image( mlt_frame frame, uint8_t **buffer, mlt_image_form
 	codec_params = stream->codecpar;
 
 	// Only change the requested image format for special cases
+#ifdef AVFILTER
+	*format = pick_image_format(self->vfilter_out ? av_buffersink_get_format(self->vfilter_out) : codec_params->format, self->full_range, *format);
+#else
 	*format = pick_image_format(codec_params->format, self->full_range, *format);
+#endif
 
 	// Duplicate the last image if necessary
 	if ( self->video_frame && self->video_frame->linesize[0]
@@ -1958,7 +1991,7 @@ static int producer_get_image( mlt_frame frame, uint8_t **buffer, mlt_image_form
 			if ( got_picture )
 			{
 #ifdef AVFILTER
-				if (self->autorotate && !setup_autorotate_filters(self) && self->vfilter_graph) {
+				if ((self->autorotate  || mlt_properties_get(properties, "filtergraph")) && !setup_filters(self) && self->vfilter_graph) {
 					int ret = av_buffersrc_add_frame(self->vfilter_in, self->video_frame);
 					if (ret < 0) {
 						got_picture = 0;
@@ -2637,9 +2670,13 @@ static int decode_audio( producer_avformat self, int *ignore, const AVPacket *pk
 	{
 		int64_t pts = pkt->pts;
 		if ( self->first_pts != AV_NOPTS_VALUE )
-			pts -= self->first_pts;
+			pts -= av_rescale_q(self->first_pts,
+								context->streams[self->video_index]->time_base,
+								context->streams[ index ]->time_base);
 		else if ( context->start_time != AV_NOPTS_VALUE && self->video_index != -1 )
-			pts -= context->start_time;
+			pts -= av_rescale_q(context->start_time,
+								AV_TIME_BASE_Q,
+								context->streams[ index ]->time_base);
 		double timebase = av_q2d( context->streams[ index ]->time_base );
 		int64_t int_position = llrint( timebase * pts * fps );
 		int64_t req_position = llrint( timecode * fps );
@@ -2651,10 +2688,17 @@ static int decode_audio( producer_avformat self, int *ignore, const AVPacket *pk
 
 		if ( self->seekable || int_position > 0 )
 		{
+			int64_t ahead_threshold = 2;
+			if ( codec_context->codec_id == AV_CODEC_ID_WMAPRO )
+			{
+				// WMAPro needs more tolerance for sync detection
+				ahead_threshold = 4;
+			}
+
 			if ( req_pts > pts ) {
 				// We are behind, so skip some
 				*ignore = lrint( timebase * (req_pts - pts) * codec_context->sample_rate );
-			} else if ( self->audio_index != INT_MAX && int_position > req_position + 2 && !self->is_audio_synchronizing ) {
+			} else if ( self->audio_index != INT_MAX && int_position > req_position + ahead_threshold && !self->is_audio_synchronizing ) {
 				// We are ahead, so seek backwards some more.
 				// Supply -1 as the position to defeat the checks needed by for the other
 				// call to seek_audio() at the beginning of producer_get_audio(). Otherwise,

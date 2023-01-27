@@ -336,6 +336,9 @@ static int link_get_image_nearest( mlt_frame frame, uint8_t** image, mlt_image_f
 	{
 		uint8_t* in_image;
 		mlt_service_lock( MLT_LINK_SERVICE(self) );
+
+		mlt_properties_pass_list( MLT_FRAME_PROPERTIES(src_frame), MLT_FRAME_PROPERTIES(frame), "crop.left crop.right crop.top crop.bottom crop.original_width crop.original_height meta.media.width meta.media.height" );
+
 		int error = mlt_frame_get_image( src_frame, &in_image, format, width, height, 0 );
 		mlt_service_unlock( MLT_LINK_SERVICE(self) );
 		if ( !error )
@@ -534,6 +537,9 @@ mlt_link link_timeremap_init( mlt_profile profile, mlt_service_type type, const 
 		self->configure = link_configure;
 		self->get_frame = link_get_frame;
 		self->close = link_close;
+
+		// Signal that this link performs frame rate conversion
+		mlt_properties_set_int( MLT_LINK_PROPERTIES(self), "_frc", 1 );
 	}
 	else
 	{

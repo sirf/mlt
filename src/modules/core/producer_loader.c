@@ -1,6 +1,6 @@
 /*
  * producer_loader.c -- auto-load producer by file name extension
- * Copyright (C) 2003-2021 Meltytech, LLC
+ * Copyright (C) 2003-2022 Meltytech, LLC
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -23,11 +23,12 @@
 #include <ctype.h>
 #include <fnmatch.h>
 #include <assert.h>
+#include <limits.h>
 
 #include <framework/mlt.h>
 
 static mlt_properties dictionary = NULL;
-static mlt_properties normalisers = NULL;
+static mlt_properties normalizers = NULL;
 
 static mlt_producer create_from( mlt_profile profile, char *file, char *services )
 {
@@ -92,8 +93,8 @@ static mlt_producer create_producer( mlt_profile profile, char *file )
 		// We only need to load the dictionary once
 		if ( dictionary == NULL )
 		{
-			char temp[ 1024 ];
-			sprintf( temp, "%s/core/loader.dict", mlt_environment( "MLT_DATA" ) );
+			char temp[PATH_MAX];
+			snprintf(temp, sizeof(temp), "%s/core/loader.dict", mlt_environment("MLT_DATA"));
 			dictionary = mlt_properties_load( temp );
 			mlt_factory_register_for_clean_up( dictionary, ( mlt_destructor )mlt_properties_close );
 		}
@@ -206,7 +207,7 @@ static void create_filter( mlt_profile profile, mlt_producer producer, char *eff
 	free( id );
 }
 
-static void attach_normalisers( mlt_profile profile, mlt_producer producer )
+static void attach_normalizers( mlt_profile profile, mlt_producer producer )
 {
 	// Loop variable
 	int i;
@@ -214,21 +215,21 @@ static void attach_normalisers( mlt_profile profile, mlt_producer producer )
 	// Tokeniser
 	mlt_tokeniser tokeniser = mlt_tokeniser_init( );
 
-	// We only need to load the normalising properties once
-	if ( normalisers == NULL )
+	// We only need to load the normalizing properties once
+	if ( normalizers == NULL )
 	{
-		char temp[ 1024 ];
-		sprintf( temp, "%s/core/loader.ini", mlt_environment( "MLT_DATA" ) );
-		normalisers = mlt_properties_load( temp );
-		mlt_factory_register_for_clean_up( normalisers, ( mlt_destructor )mlt_properties_close );
+		char temp[PATH_MAX];
+		snprintf(temp, sizeof(temp), "%s/core/loader.ini", mlt_environment("MLT_DATA"));
+		normalizers = mlt_properties_load( temp );
+		mlt_factory_register_for_clean_up( normalizers, ( mlt_destructor )mlt_properties_close );
 	}
 
-	// Apply normalisers
-	for ( i = 0; i < mlt_properties_count( normalisers ); i ++ )
+	// Apply normalizers
+	for ( i = 0; i < mlt_properties_count( normalizers ); i ++ )
 	{
 		int j = 0;
 		int created = 0;
-		char *value = mlt_properties_get_value( normalisers, i );
+		char *value = mlt_properties_get_value( normalizers, i );
 		mlt_tokeniser_parse_new( tokeniser, value, "," );
 		for ( j = 0; !created && j < mlt_tokeniser_count( tokeniser ); j ++ )
 			create_filter( profile, producer, mlt_tokeniser_get_string( tokeniser, j ), &created );
@@ -255,8 +256,8 @@ mlt_producer producer_loader_init( mlt_profile profile, mlt_service_type type, c
 		strncmp( arg, "abnormal:", 9 ) &&
 		mlt_properties_get( properties, "xml" ) == NULL &&
 		mlt_properties_get( properties, "_xml" ) == NULL &&
-		mlt_properties_get( properties, "loader_normalised" ) == NULL )
-		attach_normalisers( profile, producer );
+		mlt_properties_get( properties, "loader_normalized" ) == NULL )
+		attach_normalizers( profile, producer );
 	
 	if ( producer && mlt_service_identify( MLT_PRODUCER_SERVICE( producer ) ) != mlt_service_chain_type )
 	{

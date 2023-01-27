@@ -3,7 +3,7 @@
  * \brief Property class definition
  * \see mlt_property_s
  *
- * Copyright (C) 2003-2021 Meltytech, LLC
+ * Copyright (C) 2003-2022 Meltytech, LLC
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -50,7 +50,8 @@ typedef enum
 	mlt_prop_double = 8,  //!< set as a floating point
 	mlt_prop_data = 16,   //!< set as opaque binary
 	mlt_prop_int64 = 32,  //!< set as a 64-bit integer
-	mlt_prop_rect = 64    //!< set as a mlt_rect
+	mlt_prop_rect = 64,   //!< set as a mlt_rect
+	mlt_prop_color = 128  //!< set as a mlt_color
 }
 mlt_property_type;
 
@@ -311,7 +312,7 @@ int mlt_property_set_data( mlt_property self, void *value, int length, mlt_destr
  * \return position in frames
  */
 
-static int time_clock_to_frames( mlt_property self, const char *s, double fps, locale_t locale )
+static int time_clock_to_frames( mlt_property self, const char *s, double fps, mlt_locale_t locale )
 {
 	char *pos, *copy = strdup( s );
 	int hours = 0, minutes = 0;
@@ -446,7 +447,7 @@ static int time_code_to_frames( mlt_property self, const char *s, double fps )
  * \param locale the locale to use when converting from time clock value
  * \return the resultant integer
  */
-static int mlt_property_atoi( mlt_property self, double fps, locale_t locale )
+static int mlt_property_atoi( mlt_property self, double fps, mlt_locale_t locale )
 {
 	const char *value = self->prop_string;
 
@@ -485,11 +486,11 @@ static int mlt_property_atoi( mlt_property self, double fps, locale_t locale )
  * \return an integer value
  */
 
-int mlt_property_get_int( mlt_property self, double fps, locale_t locale )
+int mlt_property_get_int( mlt_property self, double fps, mlt_locale_t locale )
 {
 	pthread_mutex_lock( &self->mutex );
 	int result = 0;
-	if ( self->types & mlt_prop_int )
+	if ( self->types & mlt_prop_int || self->types & mlt_prop_color )
 		result = self->prop_int;
 	else if ( self->types & mlt_prop_double )
 		result = ( int )self->prop_double;
@@ -523,7 +524,7 @@ int mlt_property_get_int( mlt_property self, double fps, locale_t locale )
  * \param locale the locale to use when converting from time clock value
  * \return the resultant real number
  */
-static double mlt_property_atof( mlt_property self, double fps, locale_t locale )
+static double mlt_property_atof( mlt_property self, double fps, mlt_locale_t locale )
 {
 	const char *value = self->prop_string;
 
@@ -557,7 +558,7 @@ static double mlt_property_atof( mlt_property self, double fps, locale_t locale 
 		}
 #endif
 
-			result = strtod( value, &end );
+		result = strtod( value, &end );
 		if ( end && end[0] == '%' )
 			result /= 100.0;
 
@@ -583,13 +584,13 @@ static double mlt_property_atof( mlt_property self, double fps, locale_t locale 
  * \return a floating point value
  */
 
-double mlt_property_get_double( mlt_property self, double fps, locale_t locale )
+double mlt_property_get_double( mlt_property self, double fps, mlt_locale_t locale )
 {
 	double result = 0.0;
 	pthread_mutex_lock( &self->mutex );
 	if ( self->types & mlt_prop_double )
 		result = self->prop_double;
-	else if ( self->types & mlt_prop_int )
+	else if ( self->types & mlt_prop_int || self->types & mlt_prop_color )
 		result = ( double )self->prop_int;
 	else if ( self->types & mlt_prop_position )
 		result = ( double )self->prop_position;
@@ -618,13 +619,13 @@ double mlt_property_get_double( mlt_property self, double fps, locale_t locale )
  * \return the position in frames
  */
 
-mlt_position mlt_property_get_position( mlt_property self, double fps, locale_t locale )
+mlt_position mlt_property_get_position( mlt_property self, double fps, mlt_locale_t locale )
 {
 	mlt_position result = 0;
 	pthread_mutex_lock( &self->mutex );
 	if ( self->types & mlt_prop_position )
 		result = self->prop_position;
-	else if ( self->types & mlt_prop_int )
+	else if ( self->types & mlt_prop_int || self->types & mlt_prop_color )
 		result = ( mlt_position )self->prop_int;
 	else if ( self->types & mlt_prop_double )
 		result = ( mlt_position )self->prop_double;
@@ -674,7 +675,7 @@ int64_t mlt_property_get_int64( mlt_property self )
 	pthread_mutex_lock( &self->mutex );
 	if ( self->types & mlt_prop_int64 )
 		result = self->prop_int64;
-	else if ( self->types & mlt_prop_int )
+	else if ( self->types & mlt_prop_int || self->types & mlt_prop_color )
 		result = ( int64_t )self->prop_int;
 	else if ( self->types & mlt_prop_double )
 		result = ( int64_t )self->prop_double;
@@ -722,6 +723,13 @@ char *mlt_property_get_string_tf( mlt_property self, mlt_time_format time_format
 			self->types |= mlt_prop_string;
 			self->prop_string = malloc( 32 );
 			sprintf( self->prop_string, "%d", self->prop_int );
+		}
+		else if ( self->types & mlt_prop_color )
+		{
+			self->types |= mlt_prop_string;
+			self->prop_string = malloc( 10 );
+			uint32_t int_value = ( ( self->prop_int & 0xff ) << 24 ) | ( self->prop_int >> 8 ) & 0xffffff;
+			sprintf( self->prop_string, "#%x", int_value);
 		}
 		else if ( self->types & mlt_prop_double )
 		{
@@ -788,7 +796,7 @@ char *mlt_property_get_string( mlt_property self )
  * \return a string representation of the property or NULL if failed
  */
 
-char *mlt_property_get_string_l_tf( mlt_property self, locale_t locale, mlt_time_format time_format )
+char *mlt_property_get_string_l_tf( mlt_property self, mlt_locale_t locale, mlt_time_format time_format )
 {
 	// Optimization for no locale
 	if ( !locale )
@@ -826,6 +834,13 @@ char *mlt_property_get_string_l_tf( mlt_property self, locale_t locale, mlt_time
 			self->types |= mlt_prop_string;
 			self->prop_string = malloc( 32 );
 			sprintf( self->prop_string, "%d", self->prop_int );
+		}
+		else if ( self->types & mlt_prop_color )
+		{
+			self->types |= mlt_prop_string;
+			self->prop_string = malloc( 10 );
+			uint32_t int_value = ( ( self->prop_int & 0xff ) << 24 ) | ( self->prop_int >> 8 ) & 0xffffff;
+			sprintf( self->prop_string, "#%x", int_value);
 		}
 		else if ( self->types & mlt_prop_double )
 		{
@@ -874,7 +889,7 @@ char *mlt_property_get_string_l_tf( mlt_property self, locale_t locale, mlt_time
  * \return a string representation of the property or NULL if failed
  */
 
-char *mlt_property_get_string_l( mlt_property self, locale_t locale )
+char *mlt_property_get_string_l( mlt_property self, mlt_locale_t locale )
 {
 	return mlt_property_get_string_l_tf( self, locale, default_time_format() );
 }
@@ -902,7 +917,7 @@ void *mlt_property_get_data( mlt_property self, int *length )
 	// Return the data (note: there is no conversion here)
 	pthread_mutex_lock( &self->mutex );
 	void* result = self->data;
-	pthread_mutex_unlock( &self->mutex );	
+	pthread_mutex_unlock( &self->mutex );
 	return result;
 }
 
@@ -937,7 +952,7 @@ void mlt_property_pass( mlt_property self, mlt_property that )
 
 	if ( self->types & mlt_prop_int64 )
 		self->prop_int64 = that->prop_int64;
-	else if ( self->types & mlt_prop_int )
+	else if ( self->types & mlt_prop_int || self->types & mlt_prop_color )
 		self->prop_int = that->prop_int;
 	else if ( self->types & mlt_prop_double )
 		self->prop_double = that->prop_double;
@@ -983,6 +998,7 @@ static void time_smpte_from_frames( int frames, double fps, char *s, int drop )
 {
 	int hours, mins, secs;
 	char frame_sep = ':';
+	int save_frames = frames;
 
 	if ( fps == 30000.0/1001.0 )
 	{
@@ -1016,9 +1032,20 @@ static void time_smpte_from_frames( int frames, double fps, char *s, int drop )
 	frames -= floor( hours * 3600 * fps );
 
 	mins = frames / ( fps * 60 );
+	if (mins == 60) { // floating point error
+		++hours;
+		frames = save_frames - floor( hours * 3600 * fps );
+		mins = 0;
+	}
+	save_frames = frames;
 	frames -= floor( mins * 60 * fps );
 
 	secs = frames / fps;
+	if (secs == 60) { // floating point error
+		++mins;
+		frames = save_frames - floor( mins * 60 * fps );
+		secs = 0;
+	}
 	frames -= ceil( secs * fps );
 
 	sprintf( s, "%02d:%02d:%02d%c%0*d", hours, mins, secs, frame_sep,
@@ -1037,12 +1064,26 @@ static void time_clock_from_frames( int frames, double fps, char *s )
 {
 	int hours, mins;
 	double secs;
+	int save_frames = frames;
 
 	hours = frames / ( fps * 3600 );
 	frames -= floor( hours * 3600 * fps );
+
 	mins = frames / ( fps * 60 );
+	if (mins == 60) { // floating point error
+		++hours;
+		frames = save_frames - floor( hours * 3600 * fps );
+		mins = 0;
+	}
+	save_frames = frames;
 	frames -= floor( mins * 60  * fps );
+
 	secs = frames / fps;
+	if (secs >= 60.0) { // floating point error
+		++mins;
+		frames = save_frames - floor( mins * 60 * fps );
+		secs = frames / fps;
+	}
 
 	sprintf( s, "%02d:%02d:%06.3f", hours, mins, secs );
 }
@@ -1060,7 +1101,7 @@ static void time_clock_from_frames( int frames, double fps, char *s )
  * \return a string representation of the property or NULL if failed
  */
 
-char *mlt_property_get_time( mlt_property self, mlt_time_format format, double fps, locale_t locale )
+char *mlt_property_get_time( mlt_property self, mlt_time_format format, double fps, mlt_locale_t locale )
 {
 #if !defined(_WIN32)
 	char *orig_localename = NULL;
@@ -1161,9 +1202,10 @@ char *mlt_property_get_time( mlt_property self, mlt_time_format format, double f
  * \return true if it is numeric
  */
 
-static int is_property_numeric( mlt_property self, locale_t locale )
+static int is_property_numeric( mlt_property self, mlt_locale_t locale )
 {
 	int result = ( self->types & mlt_prop_int ) ||
+			( self->types & mlt_prop_color ) ||
 			( self->types & mlt_prop_int64 ) ||
 			( self->types & mlt_prop_double ) ||
 			( self->types & mlt_prop_position ) ||
@@ -1250,10 +1292,60 @@ static inline double catmull_rom_interpolate( double y0, double y1, double y2, d
  */
 
 int mlt_property_interpolate( mlt_property self, mlt_property p[],
-	double progress, double fps, locale_t locale, mlt_keyframe_type interp )
+	double progress, double fps, mlt_locale_t locale, mlt_keyframe_type interp )
 {
 	int error = 0;
-	if ( interp != mlt_keyframe_discrete &&
+	int colorstring = 0;
+	const char *value = self->prop_string;
+	if ( value && ( ( strlen( value ) > 6 && value[0] == '#' ) || ( strlen( value ) > 7 && value[0] == '0' && value[1] == 'x' ) ) )
+	{
+		colorstring = 1;
+	}
+
+	if ( interp != mlt_keyframe_discrete && ( self->types & mlt_prop_color || colorstring ) )
+	{
+		mlt_color value = { 0xff, 0xff, 0xff, 0xff };
+		if ( interp == mlt_keyframe_linear )
+		{
+			mlt_color colors[2];
+			mlt_color zero = { 0xff, 0xff, 0xff, 0xff };
+			colors[0] = p[1]? mlt_property_get_color( p[1], fps, locale ) : zero;
+			if ( p[2] )
+			{
+				colors[1] = mlt_property_get_color( p[2], fps, locale );
+				value.r = linear_interpolate( colors[0].r, colors[1].r, progress );
+				value.g = linear_interpolate( colors[0].g, colors[1].g, progress );
+				value.b = linear_interpolate( colors[0].b, colors[1].b, progress );
+				value.a = linear_interpolate( colors[0].a, colors[1].a, progress );
+			}
+			else
+			{
+				value = colors[0];
+			}
+		}
+		else if ( interp == mlt_keyframe_smooth )
+		{
+			mlt_color colors[4];
+			mlt_color zero = { 0xff, 0xff, 0xff, 0xff };
+			colors[1] = p[1]? mlt_property_get_color( p[1], fps, locale ) : zero;
+			if ( p[2] )
+			{
+				colors[0] = p[0]? mlt_property_get_color( p[0], fps, locale ) : zero;
+				colors[2] = p[2]? mlt_property_get_color( p[2], fps, locale ) : zero;
+				colors[3] = p[3]? mlt_property_get_color( p[3], fps, locale ) : zero;
+				value.r = CLAMP(catmull_rom_interpolate( colors[0].r, colors[1].r, colors[2].r, colors[3].r, progress ), 0, 255);
+				value.g = CLAMP(catmull_rom_interpolate( colors[0].g, colors[1].g, colors[2].g, colors[3].g, progress ), 0, 255);
+				value.b = CLAMP(catmull_rom_interpolate( colors[0].b, colors[1].b, colors[2].b, colors[3].b, progress ), 0, 255);
+				value.a = CLAMP(catmull_rom_interpolate( colors[0].a, colors[1].a, colors[2].a, colors[3].a, progress ), 0, 255);
+			}
+			else
+			{
+				value = colors[1];
+			}
+		}
+		error = mlt_property_set_color( self, value );
+	}
+	else if ( interp != mlt_keyframe_discrete &&
 		is_property_numeric( p[1], locale ) && is_property_numeric( p[2], locale ) )
 	{
 		if ( self->types & mlt_prop_rect )
@@ -1340,7 +1432,7 @@ int mlt_property_interpolate( mlt_property self, mlt_property p[],
  *  <=0 if you don't care or need that
  */
 
-static void refresh_animation( mlt_property self, double fps, locale_t locale, int length  )
+static void refresh_animation( mlt_property self, double fps, mlt_locale_t locale, int length  )
 {
 	if ( !self->animation )
 	{
@@ -1379,7 +1471,7 @@ static void refresh_animation( mlt_property self, double fps, locale_t locale, i
  * \return the real number
  */
 
-double mlt_property_anim_get_double( mlt_property self, double fps, locale_t locale, int position, int length )
+double mlt_property_anim_get_double( mlt_property self, double fps, mlt_locale_t locale, int position, int length )
 {
 	double result;
 	pthread_mutex_lock( &self->mutex );
@@ -1415,7 +1507,7 @@ double mlt_property_anim_get_double( mlt_property self, double fps, locale_t loc
  * \return an integer value
  */
 
-int mlt_property_anim_get_int( mlt_property self, double fps, locale_t locale, int position, int length )
+int mlt_property_anim_get_int( mlt_property self, double fps, mlt_locale_t locale, int position, int length )
 {
 	int result;
 	pthread_mutex_lock( &self->mutex );
@@ -1451,7 +1543,7 @@ int mlt_property_anim_get_int( mlt_property self, double fps, locale_t locale, i
  * \return the string representation of the property or NULL if failed
  */
 
-char* mlt_property_anim_get_string( mlt_property self, double fps, locale_t locale, int position, int length )
+char* mlt_property_anim_get_string( mlt_property self, double fps, mlt_locale_t locale, int position, int length )
 {
 	char *result;
 	pthread_mutex_lock( &self->mutex );
@@ -1500,7 +1592,7 @@ char* mlt_property_anim_get_string( mlt_property self, double fps, locale_t loca
  * \return false if successful, true to indicate error
  */
 
-int mlt_property_anim_set_double( mlt_property self, double value, double fps, locale_t locale,
+int mlt_property_anim_set_double( mlt_property self, double value, double fps, mlt_locale_t locale,
 	int position, int length, mlt_keyframe_type keyframe_type )
 {
 	int result;
@@ -1535,7 +1627,7 @@ int mlt_property_anim_set_double( mlt_property self, double value, double fps, l
  * \return false if successful, true to indicate error
  */
 
-int mlt_property_anim_set_int( mlt_property self, int value, double fps, locale_t locale,
+int mlt_property_anim_set_int( mlt_property self, int value, double fps, mlt_locale_t locale,
 	int position, int length, mlt_keyframe_type keyframe_type )
 {
 	int result;
@@ -1572,7 +1664,7 @@ int mlt_property_anim_set_int( mlt_property self, int value, double fps, locale_
  * \return false if successful, true to indicate error
  */
 
-int mlt_property_anim_set_string( mlt_property self, const char *value, double fps, locale_t locale, int position, int length )
+int mlt_property_anim_set_string( mlt_property self, const char *value, double fps, mlt_locale_t locale, int position, int length )
 {
 	int result;
 	struct mlt_animation_item_s item;
@@ -1606,6 +1698,156 @@ mlt_animation mlt_property_get_animation( mlt_property self )
 	pthread_mutex_lock( &self->mutex );
 	mlt_animation result = self->animation;
 	pthread_mutex_unlock( &self->mutex );
+	return result;
+}
+
+/** Set the property to a color value.
+ *
+ * \public \memberof mlt_property_s
+ * \param self a property
+ * \param value an integer
+ * \return false
+ */
+
+int mlt_property_set_color( mlt_property self, mlt_color value )
+{
+	pthread_mutex_lock( &self->mutex );
+	clear_property( self );
+	self->types = mlt_prop_color;
+	uint32_t int_value = ( value.r << 24 ) | ( value.g << 16 ) | ( value.b << 8 ) | value.a;
+	self->prop_int = int_value;
+	pthread_mutex_unlock( &self->mutex );
+	return 0;
+}
+
+/** Get the property as a color.
+ *
+ * \public \memberof mlt_property_s
+ * \param self a property
+ * \param fps frames per second, used when converting from time value
+ * \param locale the locale to use for when converting from a string
+ * \return a color value
+ */
+
+mlt_color mlt_property_get_color( mlt_property self, double fps, mlt_locale_t locale )
+{
+	mlt_color result = { 0xff, 0xff, 0xff, 0xff };
+	int color_int = mlt_property_get_int(self, fps, locale);
+
+	if ( ( self->types & mlt_prop_string ) && self->prop_string )
+	{
+		const char *color = mlt_property_get_string_l( self, locale );
+
+		if ( !strcmp( color, "red" ) )
+		{
+			result.r = 0xff;
+			result.g = 0x00;
+			result.b = 0x00;
+			return result;
+		}
+		if ( !strcmp( color, "green" ) )
+		{
+			result.r = 0x00;
+			result.g = 0xff;
+			result.b = 0x00;
+			return result;
+		}
+		if ( !strcmp( color, "blue" ) )
+		{
+			result.r = 0x00;
+			result.g = 0x00;
+			result.b = 0xff;
+			return result;
+		}
+		if ( !strcmp( color, "black" ) )
+		{
+			result.r = 0x00;
+			result.g = 0x00;
+			result.b = 0x00;
+			return result;
+		}
+		if ( !strcmp( color, "white" ) )
+		{
+			return result;
+		}
+	}
+
+	result.r = ( color_int >> 24 ) & 0xff;
+	result.g = ( color_int >> 16 ) & 0xff;
+	result.b = ( color_int >> 8 ) & 0xff;
+	result.a = ( color_int ) & 0xff;
+	return result;
+}
+
+/** Set a property animation keyframe to a color.
+ *
+ * \public \memberof mlt_property_s
+ * \param self a property
+ * \param value a color
+ * \param fps the frame rate, which may be needed for converting a time string to frame units
+ * \param locale the locale, which may be needed for converting a string to a real number
+ * \param position the frame number
+ * \param length the maximum number of frames when interpreting negative keyframe times,
+ *  <=0 if you don't care or need that
+ * \param keyframe_type the interpolation method for this keyframe
+ * \return false if successful, true to indicate error
+ */
+
+int mlt_property_anim_set_color( mlt_property self, mlt_color value, double fps, mlt_locale_t locale,
+	int position, int length, mlt_keyframe_type keyframe_type )
+{
+	int result;
+	struct mlt_animation_item_s item;
+
+	item.property = mlt_property_init();
+	item.frame = position;
+	item.keyframe_type = keyframe_type;
+	mlt_property_set_color( item.property, value );
+
+	pthread_mutex_lock( &self->mutex );
+	refresh_animation( self, fps, locale, length );
+	result = mlt_animation_insert( self->animation, &item );
+	mlt_animation_interpolate( self->animation );
+	pthread_mutex_unlock( &self->mutex );
+	mlt_property_close( item.property );
+
+	return result;
+}
+
+/** Get a color at a frame position.
+ *
+ * \public \memberof mlt_property_s
+ * \param self a property
+ * \param fps the frame rate, which may be needed for converting a time string to frame units
+ * \param locale the locale, which may be needed for converting a string to a real number
+ * \param position the frame number
+ * \param length the maximum number of frames when interpreting negative keyframe times,
+ *  <=0 if you don't care or need that
+ * \return the color
+ */
+
+mlt_color mlt_property_anim_get_color( mlt_property self, double fps, mlt_locale_t locale, int position, int length )
+{
+	mlt_color result;
+	pthread_mutex_lock( &self->mutex );
+	if (mlt_property_is_anim(self))
+	{
+		struct mlt_animation_item_s item;
+		item.property = mlt_property_init();
+		item.property->types = mlt_prop_color;
+
+		refresh_animation( self, fps, locale, length );
+		mlt_animation_get_item( self->animation, &item, position );
+		pthread_mutex_unlock( &self->mutex );
+		result = mlt_property_get_color( item.property, fps, locale );
+
+		mlt_property_close( item.property );
+	}
+	else
+	{
+		pthread_mutex_unlock( &self->mutex );
+		result = mlt_property_get_color( self, fps, locale );
+	}
 	return result;
 }
 
@@ -1669,14 +1911,14 @@ int mlt_property_set_rect( mlt_property self, mlt_rect value )
  * \return a rectangle value
  */
 
-mlt_rect mlt_property_get_rect( mlt_property self, locale_t locale )
+mlt_rect mlt_property_get_rect( mlt_property self, mlt_locale_t locale )
 {
 	mlt_rect rect = { DBL_MIN, DBL_MIN, DBL_MIN, DBL_MIN, DBL_MIN };
 	if ( ( self->types & mlt_prop_rect ) && self->data )
 		rect = *( (mlt_rect*) self->data );
 	else if ( self->types & mlt_prop_double )
 		rect.x = self->prop_double;
-	else if ( self->types & mlt_prop_int )
+	else if ( self->types & mlt_prop_int || self->types & mlt_prop_color )
 		rect.x = ( double )self->prop_int;
 	else if ( self->types & mlt_prop_position )
 		rect.x = ( double )self->prop_position;
@@ -1708,7 +1950,7 @@ mlt_rect mlt_property_get_rect( mlt_property self, locale_t locale )
 #if defined(__GLIBC__) || defined(__APPLE__) || defined(HAVE_STRTOD_L)
 			if ( locale )
 				temp = strtod_l( value, &p, locale );
-            else
+			else
 #endif
 				temp = strtod( value, &p );
 			if ( p != value )
@@ -1748,7 +1990,7 @@ mlt_rect mlt_property_get_rect( mlt_property self, locale_t locale )
 			pthread_mutex_unlock( &self->mutex );
 		}
 #endif
-    }
+	}
 	return rect;
 }
 
@@ -1766,7 +2008,7 @@ mlt_rect mlt_property_get_rect( mlt_property self, locale_t locale )
  * \return false if successful, true to indicate error
  */
 
-int mlt_property_anim_set_rect( mlt_property self, mlt_rect value, double fps, locale_t locale,
+int mlt_property_anim_set_rect( mlt_property self, mlt_rect value, double fps, mlt_locale_t locale,
 	int position, int length, mlt_keyframe_type keyframe_type )
 {
 	int result;
@@ -1799,7 +2041,7 @@ int mlt_property_anim_set_rect( mlt_property self, mlt_rect value, double fps, l
  * \return the rectangle
  */
 
-mlt_rect mlt_property_anim_get_rect( mlt_property self, double fps, locale_t locale, int position, int length )
+mlt_rect mlt_property_anim_get_rect( mlt_property self, double fps, mlt_locale_t locale, int position, int length )
 {
 	mlt_rect result;
 	pthread_mutex_lock( &self->mutex );
