@@ -1,0 +1,57 @@
+# depslib dependency file v1.0
+1653638752 source:/home/thardin/biz/jit/mlt/CMakeFiles/3.18.4/CompilerIdC/CMakeCCompilerId.c
+
+1653638752 source:/home/thardin/biz/jit/mlt/CMakeFiles/3.18.4/CompilerIdCXX/CMakeCXXCompilerId.cpp
+
+1665151040 source:/home/thardin/biz/jit/mlt/src/framework/mlt_animation.c
+	"mlt_animation.h"
+	"mlt_tokeniser.h"
+	"mlt_profile.h"
+	"mlt_factory.h"
+	"mlt_properties.h"
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+
+1652169451 /home/thardin/biz/jit/mlt/src/framework/mlt_animation.h
+	"mlt_types.h"
+	"mlt_property.h"
+
+1652169451 /home/thardin/biz/jit/mlt/src/framework/mlt_types.h
+	<inttypes.h>
+	<limits.h>
+	<stdio.h>
+	"mlt_pool.h"
+	<pthread.h>
+	<time.h>
+
+1652169451 /home/thardin/biz/jit/mlt/src/framework/mlt_pool.h
+
+1665151040 /home/thardin/biz/jit/mlt/src/framework/mlt_property.h
+	"mlt_types.h"
+	<sys/param.h>
+	<locale.h>
+	<xlocale.h>
+
+1652169451 /home/thardin/biz/jit/mlt/src/framework/mlt_tokeniser.h
+
+1652169451 /home/thardin/biz/jit/mlt/src/framework/mlt_profile.h
+	"mlt_types.h"
+
+1665151040 /home/thardin/biz/jit/mlt/src/framework/mlt_factory.h
+	"mlt_types.h"
+	"mlt_profile.h"
+	"mlt_repository.h"
+
+1652169451 /home/thardin/biz/jit/mlt/src/framework/mlt_repository.h
+	"mlt_types.h"
+	"mlt_profile.h"
+
+1665151040 /home/thardin/biz/jit/mlt/src/framework/mlt_properties.h
+	"mlt_types.h"
+	"mlt_events.h"
+	<stdio.h>
+
+1652169451 /home/thardin/biz/jit/mlt/src/framework/mlt_events.h
+	"mlt_types.h"
+
