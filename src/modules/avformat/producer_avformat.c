@@ -121,6 +121,11 @@ struct producer_avformat_s
 	pthread_mutex_t packets_mutex;
 	pthread_mutex_t open_mutex;
 	int is_mutex_init;
+	pthread_t packets_thread;
+	pthread_cond_t packets_cond;
+	int packets_thread_ret;    // latest non-zero non-EGAIN return on av_read_frame() in packets_thread
+	int packets_thread_stop;   // non-zero when packets_thread is to stop
+	int is_thread_init;
 	AVRational video_time_base;
 	mlt_frame last_good_frame; // for video error concealment
 	int last_good_position;    // for video error concealment
@@ -1676,6 +1681,53 @@ static int ignore_send_packet_result(int result)
 	return result >= 0 || result == AVERROR(EAGAIN) || result == AVERROR_EOF || result == AVERROR_INVALIDDATA || result == AVERROR(EINVAL);
 }
 
+static void* packets_worker( void *param )
+{
+	producer_avformat self = param;
+	AVPacket *pkt = av_packet_alloc();
+	if ( !pkt ) {
+		mlt_log_error( MLT_PRODUCER_SERVICE(self->parent), "av_packet_alloc failed\n" );
+		exit( EXIT_FAILURE );
+	}
+
+	for (;;) {
+		pthread_mutex_lock( &self->packets_mutex );
+
+	check_stop:
+		if ( self->packets_thread_stop ) {
+			av_packet_free( &pkt );
+			pthread_mutex_unlock( &self->packets_mutex );
+			return NULL;
+		}
+
+		if ( mlt_deque_count( self->vpackets ) >= 1 ) {
+			pthread_cond_wait( &self->packets_cond, &self->packets_mutex );
+			goto check_stop;
+		}
+
+		int ret = av_read_frame( self->video_format, pkt );
+		self->packets_thread_ret = ret;
+
+		// don't bother signalling on EAGAIN
+		if ( ret != AVERROR(EAGAIN) ) {
+			if ( ret >= 0 ) {
+				if ( pkt->stream_index == self->video_index ) {
+					mlt_deque_push_back( self->vpackets, av_packet_clone( pkt ) );
+				} else if ( !self->video_seekable && pkt->stream_index == self->audio_index ) {
+					mlt_deque_push_back( self->apackets, av_packet_clone( pkt ) );
+				}
+			} else {
+				mlt_log_verbose( MLT_PRODUCER_SERVICE(self->parent), "av_read_frame returned error %d inside packets_worker\n", ret );
+			}
+
+			pthread_cond_signal( &self->packets_cond );
+		}
+
+		av_packet_unref( pkt );
+		pthread_mutex_unlock( &self->packets_mutex );
+	}
+}
+
 /** Get an image from a frame.
 */
 
@@ -1832,6 +1884,13 @@ static int producer_get_image( mlt_frame frame, uint8_t **buffer, mlt_image_form
 		else
 			av_frame_unref( self->video_frame );
 
+		if ( !self->is_thread_init )
+		{
+			pthread_cond_init( &self->packets_cond, NULL );
+			pthread_create( &self->packets_thread, NULL, packets_worker, self );
+			self->is_thread_init = 1;
+		}
+
 		while (!got_picture && ignore_send_packet_result(self->video_send_result))
 		{
 			if ( self->video_send_result != AVERROR( EAGAIN ) )
@@ -1841,27 +1900,18 @@ static int producer_get_image( mlt_frame frame, uint8_t **buffer, mlt_image_form
 					av_packet_unref( &self->pkt );
 				av_init_packet( &self->pkt );
 				pthread_mutex_lock( &self->packets_mutex );
-				if ( mlt_deque_count( self->vpackets ) )
-				{
-					AVPacket *tmp = (AVPacket*) mlt_deque_pop_front( self->vpackets );
-					av_packet_ref( &self->pkt, tmp );
-					av_packet_free( &tmp );
-				}
-				else
-				{
-					int ret = av_read_frame( context, &self->pkt );
-					if ( ret >= 0 && !self->video_seekable && self->pkt.stream_index == self->audio_index ) {
-						mlt_deque_push_back( self->apackets, av_packet_clone( &self->pkt ) );
-					} else if (ret == AVERROR(EAGAIN)) {
-						pthread_mutex_unlock( &self->packets_mutex );
-						continue;
-					} else if ( ret < 0 && ret != AVERROR(EAGAIN) ) {
-						if ( ret == AVERROR_EOF ) 
+				int pop = 0;
+				if ( mlt_deque_count( self->vpackets ) ) {
+					pop = 1;
+				} else {
+					while ( mlt_deque_count( self->vpackets ) == 0 && self->packets_thread_ret == 0 ) {
+						pthread_cond_wait( &self->packets_cond, &self->packets_mutex );
+					}
+
+					if ( self->packets_thread_ret < 0 ) {
+						if ( self->packets_thread_ret == AVERROR_EOF )
 						{
 							self->pkt.stream_index = self->video_index;
-						} else 
-						{
-							mlt_log_verbose( MLT_PRODUCER_SERVICE( producer ), "av_read_frame returned error %d inside get_image\n", ret );
 						}
 						if ( !self->video_seekable && mlt_properties_get_int( properties, "reconnect" ) )
 						{
@@ -1881,7 +1931,16 @@ static int producer_get_image( mlt_frame frame, uint8_t **buffer, mlt_image_form
 						// Send null packets to drain decoder.
 						self->pkt.size = 0;
 						self->pkt.data = NULL;
+					} else {
+						// deque is non-empty
+						pop = 1;
 					}
+				}
+				if ( pop ) {
+					AVPacket *tmp = (AVPacket*) mlt_deque_pop_front( self->vpackets );
+					av_packet_ref( &self->pkt, tmp );
+					av_packet_free( &tmp );
+					pthread_cond_signal( &self->packets_cond );
 				}
 				pthread_mutex_unlock( &self->packets_mutex );
 			}
@@ -3230,6 +3289,15 @@ static void producer_avformat_close( producer_avformat self )
 		avcodec_close( self->video_codec );
 	self->video_codec = NULL;
 	// Close the file
+	if ( self->is_thread_init )
+	{
+		pthread_mutex_lock( &self->packets_mutex );
+		self->packets_thread_stop = 1;
+		pthread_cond_signal( &self->packets_cond );
+		pthread_mutex_unlock( &self->packets_mutex );
+		pthread_join( self->packets_thread, NULL );
+		pthread_cond_destroy( &self->packets_cond );
+	}
 	if ( self->dummy_context )
 		avformat_close_input( &self->dummy_context );
 	if ( self->seekable && self->audio_format )
