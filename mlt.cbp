@@ -1,0 +1,1427 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6" />
+	<Project>
+		<Option title="mlt" />
+		<Option pch_mode="2" />
+		<Option compiler="gcc" />
+		<Build>
+			<Target title="Debug">
+				<Option output="bin/Debug/mlt" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/Debug/" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-g" />
+				</Compiler>
+			</Target>
+			<Target title="Release">
+				<Option output="bin/Release/mlt" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/Release/" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-O2" />
+				</Compiler>
+				<Linker>
+					<Add option="-s" />
+				</Linker>
+			</Target>
+		</Build>
+		<Compiler>
+			<Add option="-Wall" />
+		</Compiler>
+		<Unit filename="CMakeFiles/3.18.4/CompilerIdC/CMakeCCompilerId.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="CMakeFiles/3.18.4/CompilerIdCXX/CMakeCXXCompilerId.cpp" />
+		<Unit filename="out/share/mlt/avformat/common.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/avformat/common.h" />
+		<Unit filename="out/share/mlt/avformat/consumer_avformat.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/avformat/factory.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/avformat/filter_avcolour_space.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/avformat/filter_avdeinterlace.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/avformat/filter_avfilter.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/avformat/filter_swresample.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/avformat/filter_swscale.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/avformat/mmx.h" />
+		<Unit filename="out/share/mlt/avformat/producer_avformat.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/core/composite_line_yuv_mmx.S" />
+		<Unit filename="out/share/mlt/core/composite_line_yuv_sse2_simple.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/core/consumer_multi.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/core/consumer_null.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/core/factory.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/core/filter_audiochannels.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/core/filter_audioconvert.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/core/filter_audiomap.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/core/filter_audiowave.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/core/filter_brightness.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/core/filter_channelcopy.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/core/filter_choppy.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/core/filter_crop.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/core/filter_fieldorder.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/core/filter_gamma.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/core/filter_greyscale.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/core/filter_imageconvert.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/core/filter_luma.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/core/filter_mask_apply.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/core/filter_mask_start.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/core/filter_mirror.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/core/filter_mono.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/core/filter_obscure.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/core/filter_panner.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/core/filter_rescale.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/core/filter_resize.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/core/filter_transition.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/core/filter_watermark.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/core/link_timeremap.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/core/producer_colour.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/core/producer_consumer.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/core/producer_hold.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/core/producer_loader.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/core/producer_melt.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/core/producer_noise.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/core/producer_timewarp.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/core/producer_tone.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/core/transition_composite.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/core/transition_composite.h" />
+		<Unit filename="out/share/mlt/core/transition_luma.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/core/transition_matte.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/core/transition_mix.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/decklink/common.cpp" />
+		<Unit filename="out/share/mlt/decklink/common.h" />
+		<Unit filename="out/share/mlt/decklink/consumer_decklink.cpp" />
+		<Unit filename="out/share/mlt/decklink/darwin/DeckLinkAPI.h" />
+		<Unit filename="out/share/mlt/decklink/darwin/DeckLinkAPIDispatch.cpp" />
+		<Unit filename="out/share/mlt/decklink/linux/DeckLinkAPI.h" />
+		<Unit filename="out/share/mlt/decklink/linux/DeckLinkAPIDispatch.cpp" />
+		<Unit filename="out/share/mlt/decklink/linux/LinuxCOM.h" />
+		<Unit filename="out/share/mlt/decklink/producer_decklink.cpp" />
+		<Unit filename="out/share/mlt/decklink/win/DeckLinkAPI_h.h" />
+		<Unit filename="out/share/mlt/decklink/win/DeckLinkAPI_i.cpp" />
+		<Unit filename="out/share/mlt/frei0r/factory.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/frei0r/filter_cairoblend_mode.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/frei0r/filter_frei0r.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/frei0r/frei0r_helper.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/frei0r/frei0r_helper.h" />
+		<Unit filename="out/share/mlt/frei0r/producer_frei0r.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/frei0r/transition_frei0r.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/gdk/factory.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/gdk/filter_rescale.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/gdk/have_mmx.S" />
+		<Unit filename="out/share/mlt/gdk/pixops.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/gdk/pixops.h" />
+		<Unit filename="out/share/mlt/gdk/producer_pango.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/gdk/producer_pixbuf.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/gdk/scale_line_22_yuv_mmx.S" />
+		<Unit filename="out/share/mlt/jackrack/consumer_jack.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/jackrack/factory.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/jackrack/filter_jackrack.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/jackrack/filter_ladspa.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/jackrack/jack_rack.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/jackrack/jack_rack.h" />
+		<Unit filename="out/share/mlt/jackrack/lock_free_fifo.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/jackrack/lock_free_fifo.h" />
+		<Unit filename="out/share/mlt/jackrack/plugin.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/jackrack/plugin.h" />
+		<Unit filename="out/share/mlt/jackrack/plugin_desc.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/jackrack/plugin_desc.h" />
+		<Unit filename="out/share/mlt/jackrack/plugin_mgr.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/jackrack/plugin_mgr.h" />
+		<Unit filename="out/share/mlt/jackrack/plugin_settings.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/jackrack/plugin_settings.h" />
+		<Unit filename="out/share/mlt/jackrack/process.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/jackrack/process.h" />
+		<Unit filename="out/share/mlt/jackrack/producer_ladspa.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/kdenlive/factory.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/kdenlive/filter_boxblur.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/kdenlive/filter_freeze.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/kdenlive/filter_wave.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/kdenlive/producer_framebuffer.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/movit/consumer_xgl.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/movit/factory.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/movit/filter_glsl_manager.cpp" />
+		<Unit filename="out/share/mlt/movit/filter_glsl_manager.h" />
+		<Unit filename="out/share/mlt/movit/filter_movit_blur.cpp" />
+		<Unit filename="out/share/mlt/movit/filter_movit_convert.cpp" />
+		<Unit filename="out/share/mlt/movit/filter_movit_crop.cpp" />
+		<Unit filename="out/share/mlt/movit/filter_movit_deconvolution_sharpen.cpp" />
+		<Unit filename="out/share/mlt/movit/filter_movit_diffusion.cpp" />
+		<Unit filename="out/share/mlt/movit/filter_movit_flip.cpp" />
+		<Unit filename="out/share/mlt/movit/filter_movit_glow.cpp" />
+		<Unit filename="out/share/mlt/movit/filter_movit_lift_gamma_gain.cpp" />
+		<Unit filename="out/share/mlt/movit/filter_movit_mirror.cpp" />
+		<Unit filename="out/share/mlt/movit/filter_movit_opacity.cpp" />
+		<Unit filename="out/share/mlt/movit/filter_movit_rect.cpp" />
+		<Unit filename="out/share/mlt/movit/filter_movit_resample.cpp" />
+		<Unit filename="out/share/mlt/movit/filter_movit_resize.cpp" />
+		<Unit filename="out/share/mlt/movit/filter_movit_saturation.cpp" />
+		<Unit filename="out/share/mlt/movit/filter_movit_vignette.cpp" />
+		<Unit filename="out/share/mlt/movit/filter_movit_white_balance.cpp" />
+		<Unit filename="out/share/mlt/movit/mlt_flip_effect.h" />
+		<Unit filename="out/share/mlt/movit/mlt_movit_input.cpp" />
+		<Unit filename="out/share/mlt/movit/mlt_movit_input.h" />
+		<Unit filename="out/share/mlt/movit/optional_effect.h" />
+		<Unit filename="out/share/mlt/movit/transition_movit_luma.cpp" />
+		<Unit filename="out/share/mlt/movit/transition_movit_mix.cpp" />
+		<Unit filename="out/share/mlt/movit/transition_movit_overlay.cpp" />
+		<Unit filename="out/share/mlt/ndi/consumer_ndi.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/ndi/factory.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/ndi/factory.h" />
+		<Unit filename="out/share/mlt/ndi/producer_ndi.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/normalize/factory.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/normalize/filter_audiolevel.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/normalize/filter_volume.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/oldfilm/factory.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/oldfilm/filter_dust.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/oldfilm/filter_grain.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/oldfilm/filter_lines.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/oldfilm/filter_oldfilm.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/oldfilm/filter_tcolor.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/oldfilm/filter_vignette.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/opencv/factory.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/opencv/filter_opencv_tracker.cpp" />
+		<Unit filename="out/share/mlt/plus/consumer_blipflash.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/plus/ebur128/ebur128.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/plus/ebur128/ebur128.h" />
+		<Unit filename="out/share/mlt/plus/ebur128/queue/sys/queue.h" />
+		<Unit filename="out/share/mlt/plus/factory.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/plus/filter_affine.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/plus/filter_charcoal.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/plus/filter_chroma.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/plus/filter_chroma_hold.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/plus/filter_dance.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/plus/filter_dynamic_loudness.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/plus/filter_dynamictext.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/plus/filter_fft.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/plus/filter_invert.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/plus/filter_lift_gamma_gain.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/plus/filter_loudness.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/plus/filter_loudness_meter.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/plus/filter_lumakey.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/plus/filter_pillar_echo.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/plus/filter_rgblut.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/plus/filter_sepia.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/plus/filter_shape.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/plus/filter_spot_remover.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/plus/filter_strobe.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/plus/filter_text.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/plus/filter_threshold.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/plus/filter_timer.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/plus/interp.h" />
+		<Unit filename="out/share/mlt/plus/producer_blipflash.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/plus/producer_count.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/plus/producer_pgm.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/plus/transition_affine.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/plusgpl/cJSON.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/plusgpl/cJSON.h" />
+		<Unit filename="out/share/mlt/plusgpl/consumer_cbrts.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/plusgpl/factory.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/plusgpl/filter_burn.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/plusgpl/filter_lumaliftgaingamma.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/plusgpl/filter_rotoscoping.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/plusgpl/filter_telecide.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/plusgpl/image.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/plusgpl/utils.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/plusgpl/utils.h" />
+		<Unit filename="out/share/mlt/qt/common.cpp" />
+		<Unit filename="out/share/mlt/qt/common.h" />
+		<Unit filename="out/share/mlt/qt/consumer_qglsl.cpp" />
+		<Unit filename="out/share/mlt/qt/factory.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/qt/filter_audiospectrum.cpp" />
+		<Unit filename="out/share/mlt/qt/filter_audiowaveform.cpp" />
+		<Unit filename="out/share/mlt/qt/filter_lightshow.cpp" />
+		<Unit filename="out/share/mlt/qt/filter_qtblend.cpp" />
+		<Unit filename="out/share/mlt/qt/filter_qtcrop.cpp" />
+		<Unit filename="out/share/mlt/qt/filter_qtext.cpp" />
+		<Unit filename="out/share/mlt/qt/filter_typewriter.cpp" />
+		<Unit filename="out/share/mlt/qt/graph.cpp" />
+		<Unit filename="out/share/mlt/qt/graph.h" />
+		<Unit filename="out/share/mlt/qt/kdenlivetitle_wrapper.cpp" />
+		<Unit filename="out/share/mlt/qt/kdenlivetitle_wrapper.h" />
+		<Unit filename="out/share/mlt/qt/mltqt_autogen/moc_predefs.h" />
+		<Unit filename="out/share/mlt/qt/mltqt_autogen/mocs_compilation.cpp" />
+		<Unit filename="out/share/mlt/qt/producer_kdenlivetitle.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/qt/producer_qimage.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/qt/producer_qtext.cpp" />
+		<Unit filename="out/share/mlt/qt/qimage_wrapper.cpp" />
+		<Unit filename="out/share/mlt/qt/qimage_wrapper.h" />
+		<Unit filename="out/share/mlt/qt/transition_qtblend.cpp" />
+		<Unit filename="out/share/mlt/qt/transition_vqm.cpp" />
+		<Unit filename="out/share/mlt/qt/typewriter.cpp" />
+		<Unit filename="out/share/mlt/qt/typewriter.h" />
+		<Unit filename="out/share/mlt/resample/factory.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/resample/filter_resample.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/rtaudio/RtAudio.cpp" />
+		<Unit filename="out/share/mlt/rtaudio/RtAudio.h" />
+		<Unit filename="out/share/mlt/rtaudio/consumer_rtaudio.cpp" />
+		<Unit filename="out/share/mlt/rubberband/factory.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/rubberband/filter_rbpitch.cpp" />
+		<Unit filename="out/share/mlt/sdl/consumer_sdl.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/sdl/consumer_sdl_audio.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/sdl/consumer_sdl_osx.h" />
+		<Unit filename="out/share/mlt/sdl/consumer_sdl_osx_hack.h" />
+		<Unit filename="out/share/mlt/sdl/consumer_sdl_preview.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/sdl/consumer_sdl_still.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/sdl/factory.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/sdl2/common.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/sdl2/common.h" />
+		<Unit filename="out/share/mlt/sdl2/consumer_sdl2_audio.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/sdl2/factory.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/sox/factory.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/sox/filter_sox.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/vid.stab/common.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/vid.stab/common.h" />
+		<Unit filename="out/share/mlt/vid.stab/factory.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/vid.stab/filter_deshake.cpp" />
+		<Unit filename="out/share/mlt/vid.stab/filter_vidstab.cpp" />
+		<Unit filename="out/share/mlt/vorbis/factory.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/vorbis/producer_vorbis.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/xine/attributes.h" />
+		<Unit filename="out/share/mlt/xine/cpu_accel.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/xine/deinterlace.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/xine/deinterlace.h" />
+		<Unit filename="out/share/mlt/xine/factory.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/xine/filter_deinterlace.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/xine/vf_yadif_template.h" />
+		<Unit filename="out/share/mlt/xine/xineutils.h" />
+		<Unit filename="out/share/mlt/xine/yadif.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/xine/yadif.h" />
+		<Unit filename="out/share/mlt/xml/common.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/xml/common.h" />
+		<Unit filename="out/share/mlt/xml/consumer_xml.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/xml/factory.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/xml/filter_gpstext.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/xml/gps_parser.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="out/share/mlt/xml/gps_parser.h" />
+		<Unit filename="out/share/mlt/xml/producer_xml.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/examples/play.cpp" />
+		<Unit filename="src/framework/mlt.h" />
+		<Unit filename="src/framework/mlt_animation.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/framework/mlt_animation.h" />
+		<Unit filename="src/framework/mlt_audio.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/framework/mlt_audio.h" />
+		<Unit filename="src/framework/mlt_cache.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/framework/mlt_cache.h" />
+		<Unit filename="src/framework/mlt_chain.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/framework/mlt_chain.h" />
+		<Unit filename="src/framework/mlt_consumer.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/framework/mlt_consumer.h" />
+		<Unit filename="src/framework/mlt_deque.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/framework/mlt_deque.h" />
+		<Unit filename="src/framework/mlt_events.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/framework/mlt_events.h" />
+		<Unit filename="src/framework/mlt_factory.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/framework/mlt_factory.h" />
+		<Unit filename="src/framework/mlt_field.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/framework/mlt_field.h" />
+		<Unit filename="src/framework/mlt_filter.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/framework/mlt_filter.h" />
+		<Unit filename="src/framework/mlt_frame.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/framework/mlt_frame.h" />
+		<Unit filename="src/framework/mlt_image.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/framework/mlt_image.h" />
+		<Unit filename="src/framework/mlt_link.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/framework/mlt_link.h" />
+		<Unit filename="src/framework/mlt_log.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/framework/mlt_log.h" />
+		<Unit filename="src/framework/mlt_luma_map.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/framework/mlt_luma_map.h" />
+		<Unit filename="src/framework/mlt_multitrack.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/framework/mlt_multitrack.h" />
+		<Unit filename="src/framework/mlt_parser.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/framework/mlt_parser.h" />
+		<Unit filename="src/framework/mlt_playlist.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/framework/mlt_playlist.h" />
+		<Unit filename="src/framework/mlt_pool.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/framework/mlt_pool.h" />
+		<Unit filename="src/framework/mlt_producer.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/framework/mlt_producer.h" />
+		<Unit filename="src/framework/mlt_profile.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/framework/mlt_profile.h" />
+		<Unit filename="src/framework/mlt_properties.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/framework/mlt_properties.h" />
+		<Unit filename="src/framework/mlt_property.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/framework/mlt_property.h" />
+		<Unit filename="src/framework/mlt_repository.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/framework/mlt_repository.h" />
+		<Unit filename="src/framework/mlt_service.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/framework/mlt_service.h" />
+		<Unit filename="src/framework/mlt_slices.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/framework/mlt_slices.h" />
+		<Unit filename="src/framework/mlt_tokeniser.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/framework/mlt_tokeniser.h" />
+		<Unit filename="src/framework/mlt_tractor.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/framework/mlt_tractor.h" />
+		<Unit filename="src/framework/mlt_transition.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/framework/mlt_transition.h" />
+		<Unit filename="src/framework/mlt_types.h" />
+		<Unit filename="src/framework/mlt_version.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/framework/mlt_version.h" />
+		<Unit filename="src/melt/JitControl.pb-c.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/melt/JitControl.pb-c.h" />
+		<Unit filename="src/melt/JitStatus.pb-c.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/melt/JitStatus.pb-c.h" />
+		<Unit filename="src/melt/io.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/melt/io.h" />
+		<Unit filename="src/melt/melt.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/mlt++/Mlt.h" />
+		<Unit filename="src/mlt++/MltAnimation.cpp" />
+		<Unit filename="src/mlt++/MltAnimation.h" />
+		<Unit filename="src/mlt++/MltAudio.cpp" />
+		<Unit filename="src/mlt++/MltAudio.h" />
+		<Unit filename="src/mlt++/MltChain.cpp" />
+		<Unit filename="src/mlt++/MltChain.h" />
+		<Unit filename="src/mlt++/MltConfig.h" />
+		<Unit filename="src/mlt++/MltConsumer.cpp" />
+		<Unit filename="src/mlt++/MltConsumer.h" />
+		<Unit filename="src/mlt++/MltDeque.cpp" />
+		<Unit filename="src/mlt++/MltDeque.h" />
+		<Unit filename="src/mlt++/MltEvent.cpp" />
+		<Unit filename="src/mlt++/MltEvent.h" />
+		<Unit filename="src/mlt++/MltFactory.cpp" />
+		<Unit filename="src/mlt++/MltFactory.h" />
+		<Unit filename="src/mlt++/MltField.cpp" />
+		<Unit filename="src/mlt++/MltField.h" />
+		<Unit filename="src/mlt++/MltFilter.cpp" />
+		<Unit filename="src/mlt++/MltFilter.h" />
+		<Unit filename="src/mlt++/MltFilteredConsumer.cpp" />
+		<Unit filename="src/mlt++/MltFilteredConsumer.h" />
+		<Unit filename="src/mlt++/MltFilteredProducer.cpp" />
+		<Unit filename="src/mlt++/MltFilteredProducer.h" />
+		<Unit filename="src/mlt++/MltFrame.cpp" />
+		<Unit filename="src/mlt++/MltFrame.h" />
+		<Unit filename="src/mlt++/MltImage.cpp" />
+		<Unit filename="src/mlt++/MltImage.h" />
+		<Unit filename="src/mlt++/MltLink.cpp" />
+		<Unit filename="src/mlt++/MltLink.h" />
+		<Unit filename="src/mlt++/MltMultitrack.cpp" />
+		<Unit filename="src/mlt++/MltMultitrack.h" />
+		<Unit filename="src/mlt++/MltParser.cpp" />
+		<Unit filename="src/mlt++/MltParser.h" />
+		<Unit filename="src/mlt++/MltPlaylist.cpp" />
+		<Unit filename="src/mlt++/MltPlaylist.h" />
+		<Unit filename="src/mlt++/MltProducer.cpp" />
+		<Unit filename="src/mlt++/MltProducer.h" />
+		<Unit filename="src/mlt++/MltProfile.cpp" />
+		<Unit filename="src/mlt++/MltProfile.h" />
+		<Unit filename="src/mlt++/MltProperties.cpp" />
+		<Unit filename="src/mlt++/MltProperties.h" />
+		<Unit filename="src/mlt++/MltPushConsumer.cpp" />
+		<Unit filename="src/mlt++/MltPushConsumer.h" />
+		<Unit filename="src/mlt++/MltRepository.cpp" />
+		<Unit filename="src/mlt++/MltRepository.h" />
+		<Unit filename="src/mlt++/MltService.cpp" />
+		<Unit filename="src/mlt++/MltService.h" />
+		<Unit filename="src/mlt++/MltTokeniser.cpp" />
+		<Unit filename="src/mlt++/MltTokeniser.h" />
+		<Unit filename="src/mlt++/MltTractor.cpp" />
+		<Unit filename="src/mlt++/MltTractor.h" />
+		<Unit filename="src/mlt++/MltTransition.cpp" />
+		<Unit filename="src/mlt++/MltTransition.h" />
+		<Unit filename="src/modules/avformat/common.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/avformat/common.h" />
+		<Unit filename="src/modules/avformat/consumer_avformat.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/avformat/factory.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/avformat/filter_avcolour_space.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/avformat/filter_avdeinterlace.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/avformat/filter_avfilter.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/avformat/filter_swresample.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/avformat/filter_swscale.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/avformat/mmx.h" />
+		<Unit filename="src/modules/avformat/producer_avformat.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/core/composite_line_yuv_mmx.S" />
+		<Unit filename="src/modules/core/composite_line_yuv_sse2_simple.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/core/consumer_multi.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/core/consumer_null.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/core/factory.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/core/filter_audiochannels.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/core/filter_audioconvert.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/core/filter_audiomap.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/core/filter_audiowave.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/core/filter_brightness.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/core/filter_channelcopy.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/core/filter_choppy.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/core/filter_crop.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/core/filter_fieldorder.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/core/filter_gamma.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/core/filter_greyscale.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/core/filter_imageconvert.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/core/filter_luma.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/core/filter_mask_apply.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/core/filter_mask_start.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/core/filter_mirror.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/core/filter_mono.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/core/filter_obscure.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/core/filter_panner.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/core/filter_rescale.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/core/filter_resize.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/core/filter_transition.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/core/filter_watermark.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/core/link_timeremap.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/core/producer_colour.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/core/producer_consumer.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/core/producer_hold.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/core/producer_loader.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/core/producer_melt.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/core/producer_noise.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/core/producer_timewarp.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/core/producer_tone.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/core/transition_composite.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/core/transition_composite.h" />
+		<Unit filename="src/modules/core/transition_luma.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/core/transition_matte.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/core/transition_mix.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/decklink/common.cpp" />
+		<Unit filename="src/modules/decklink/common.h" />
+		<Unit filename="src/modules/decklink/consumer_decklink.cpp" />
+		<Unit filename="src/modules/decklink/darwin/DeckLinkAPI.h" />
+		<Unit filename="src/modules/decklink/darwin/DeckLinkAPIDispatch.cpp" />
+		<Unit filename="src/modules/decklink/linux/DeckLinkAPI.h" />
+		<Unit filename="src/modules/decklink/linux/DeckLinkAPIDispatch.cpp" />
+		<Unit filename="src/modules/decklink/linux/LinuxCOM.h" />
+		<Unit filename="src/modules/decklink/producer_decklink.cpp" />
+		<Unit filename="src/modules/decklink/win/DeckLinkAPI_h.h" />
+		<Unit filename="src/modules/decklink/win/DeckLinkAPI_i.cpp" />
+		<Unit filename="src/modules/frei0r/factory.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/frei0r/filter_cairoblend_mode.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/frei0r/filter_frei0r.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/frei0r/frei0r_helper.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/frei0r/frei0r_helper.h" />
+		<Unit filename="src/modules/frei0r/producer_frei0r.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/frei0r/transition_frei0r.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/gdk/factory.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/gdk/filter_rescale.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/gdk/have_mmx.S" />
+		<Unit filename="src/modules/gdk/pixops.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/gdk/pixops.h" />
+		<Unit filename="src/modules/gdk/producer_pango.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/gdk/producer_pixbuf.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/gdk/scale_line_22_yuv_mmx.S" />
+		<Unit filename="src/modules/jackrack/consumer_jack.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/jackrack/factory.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/jackrack/filter_jackrack.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/jackrack/filter_ladspa.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/jackrack/jack_rack.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/jackrack/jack_rack.h" />
+		<Unit filename="src/modules/jackrack/lock_free_fifo.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/jackrack/lock_free_fifo.h" />
+		<Unit filename="src/modules/jackrack/plugin.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/jackrack/plugin.h" />
+		<Unit filename="src/modules/jackrack/plugin_desc.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/jackrack/plugin_desc.h" />
+		<Unit filename="src/modules/jackrack/plugin_mgr.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/jackrack/plugin_mgr.h" />
+		<Unit filename="src/modules/jackrack/plugin_settings.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/jackrack/plugin_settings.h" />
+		<Unit filename="src/modules/jackrack/process.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/jackrack/process.h" />
+		<Unit filename="src/modules/jackrack/producer_ladspa.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/kdenlive/factory.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/kdenlive/filter_boxblur.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/kdenlive/filter_freeze.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/kdenlive/filter_wave.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/kdenlive/producer_framebuffer.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/movit/consumer_xgl.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/movit/factory.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/movit/filter_glsl_manager.cpp" />
+		<Unit filename="src/modules/movit/filter_glsl_manager.h" />
+		<Unit filename="src/modules/movit/filter_movit_blur.cpp" />
+		<Unit filename="src/modules/movit/filter_movit_convert.cpp" />
+		<Unit filename="src/modules/movit/filter_movit_crop.cpp" />
+		<Unit filename="src/modules/movit/filter_movit_deconvolution_sharpen.cpp" />
+		<Unit filename="src/modules/movit/filter_movit_diffusion.cpp" />
+		<Unit filename="src/modules/movit/filter_movit_flip.cpp" />
+		<Unit filename="src/modules/movit/filter_movit_glow.cpp" />
+		<Unit filename="src/modules/movit/filter_movit_lift_gamma_gain.cpp" />
+		<Unit filename="src/modules/movit/filter_movit_mirror.cpp" />
+		<Unit filename="src/modules/movit/filter_movit_opacity.cpp" />
+		<Unit filename="src/modules/movit/filter_movit_rect.cpp" />
+		<Unit filename="src/modules/movit/filter_movit_resample.cpp" />
+		<Unit filename="src/modules/movit/filter_movit_resize.cpp" />
+		<Unit filename="src/modules/movit/filter_movit_saturation.cpp" />
+		<Unit filename="src/modules/movit/filter_movit_vignette.cpp" />
+		<Unit filename="src/modules/movit/filter_movit_white_balance.cpp" />
+		<Unit filename="src/modules/movit/mlt_flip_effect.h" />
+		<Unit filename="src/modules/movit/mlt_movit_input.cpp" />
+		<Unit filename="src/modules/movit/mlt_movit_input.h" />
+		<Unit filename="src/modules/movit/optional_effect.h" />
+		<Unit filename="src/modules/movit/transition_movit_luma.cpp" />
+		<Unit filename="src/modules/movit/transition_movit_mix.cpp" />
+		<Unit filename="src/modules/movit/transition_movit_overlay.cpp" />
+		<Unit filename="src/modules/ndi/consumer_ndi.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/ndi/factory.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/ndi/factory.h" />
+		<Unit filename="src/modules/ndi/producer_ndi.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/normalize/factory.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/normalize/filter_audiolevel.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/normalize/filter_volume.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/oldfilm/factory.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/oldfilm/filter_dust.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/oldfilm/filter_grain.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/oldfilm/filter_lines.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/oldfilm/filter_oldfilm.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/oldfilm/filter_tcolor.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/oldfilm/filter_vignette.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/opencv/factory.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/opencv/filter_opencv_tracker.cpp" />
+		<Unit filename="src/modules/plus/consumer_blipflash.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/plus/ebur128/ebur128.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/plus/ebur128/ebur128.h" />
+		<Unit filename="src/modules/plus/ebur128/queue/sys/queue.h" />
+		<Unit filename="src/modules/plus/factory.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/plus/filter_affine.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/plus/filter_charcoal.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/plus/filter_chroma.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/plus/filter_chroma_hold.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/plus/filter_dance.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/plus/filter_dynamic_loudness.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/plus/filter_dynamictext.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/plus/filter_fft.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/plus/filter_invert.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/plus/filter_lift_gamma_gain.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/plus/filter_loudness.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/plus/filter_loudness_meter.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/plus/filter_lumakey.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/plus/filter_pillar_echo.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/plus/filter_rgblut.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/plus/filter_sepia.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/plus/filter_shape.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/plus/filter_spot_remover.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/plus/filter_strobe.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/plus/filter_text.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/plus/filter_threshold.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/plus/filter_timer.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/plus/interp.h" />
+		<Unit filename="src/modules/plus/producer_blipflash.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/plus/producer_count.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/plus/producer_pgm.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/plus/transition_affine.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/plusgpl/cJSON.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/plusgpl/cJSON.h" />
+		<Unit filename="src/modules/plusgpl/consumer_cbrts.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/plusgpl/factory.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/plusgpl/filter_burn.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/plusgpl/filter_lumaliftgaingamma.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/plusgpl/filter_rotoscoping.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/plusgpl/filter_telecide.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/plusgpl/image.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/plusgpl/utils.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/plusgpl/utils.h" />
+		<Unit filename="src/modules/qt/common.cpp" />
+		<Unit filename="src/modules/qt/common.h" />
+		<Unit filename="src/modules/qt/consumer_qglsl.cpp" />
+		<Unit filename="src/modules/qt/factory.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/qt/filter_audiospectrum.cpp" />
+		<Unit filename="src/modules/qt/filter_audiowaveform.cpp" />
+		<Unit filename="src/modules/qt/filter_lightshow.cpp" />
+		<Unit filename="src/modules/qt/filter_qtblend.cpp" />
+		<Unit filename="src/modules/qt/filter_qtcrop.cpp" />
+		<Unit filename="src/modules/qt/filter_qtext.cpp" />
+		<Unit filename="src/modules/qt/filter_typewriter.cpp" />
+		<Unit filename="src/modules/qt/graph.cpp" />
+		<Unit filename="src/modules/qt/graph.h" />
+		<Unit filename="src/modules/qt/kdenlivetitle_wrapper.cpp" />
+		<Unit filename="src/modules/qt/kdenlivetitle_wrapper.h" />
+		<Unit filename="src/modules/qt/mltqt_autogen/moc_predefs.h" />
+		<Unit filename="src/modules/qt/mltqt_autogen/mocs_compilation.cpp" />
+		<Unit filename="src/modules/qt/producer_kdenlivetitle.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/qt/producer_qimage.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/qt/producer_qtext.cpp" />
+		<Unit filename="src/modules/qt/qimage_wrapper.cpp" />
+		<Unit filename="src/modules/qt/qimage_wrapper.h" />
+		<Unit filename="src/modules/qt/transition_qtblend.cpp" />
+		<Unit filename="src/modules/qt/transition_vqm.cpp" />
+		<Unit filename="src/modules/qt/typewriter.cpp" />
+		<Unit filename="src/modules/qt/typewriter.h" />
+		<Unit filename="src/modules/resample/factory.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/resample/filter_resample.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/rtaudio/RtAudio.cpp" />
+		<Unit filename="src/modules/rtaudio/RtAudio.h" />
+		<Unit filename="src/modules/rtaudio/consumer_rtaudio.cpp" />
+		<Unit filename="src/modules/rubberband/factory.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/rubberband/filter_rbpitch.cpp" />
+		<Unit filename="src/modules/sdl/consumer_sdl.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/sdl/consumer_sdl_audio.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/sdl/consumer_sdl_osx.h" />
+		<Unit filename="src/modules/sdl/consumer_sdl_osx_hack.h" />
+		<Unit filename="src/modules/sdl/consumer_sdl_preview.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/sdl/consumer_sdl_still.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/sdl/factory.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/sdl2/common.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/sdl2/common.h" />
+		<Unit filename="src/modules/sdl2/consumer_sdl2.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/sdl2/consumer_sdl2_audio.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/sdl2/factory.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/sox/factory.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/sox/filter_sox.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/vid.stab/common.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/vid.stab/common.h" />
+		<Unit filename="src/modules/vid.stab/factory.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/vid.stab/filter_deshake.cpp" />
+		<Unit filename="src/modules/vid.stab/filter_vidstab.cpp" />
+		<Unit filename="src/modules/vorbis/factory.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/vorbis/producer_vorbis.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/xine/attributes.h" />
+		<Unit filename="src/modules/xine/cpu_accel.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/xine/deinterlace.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/xine/deinterlace.h" />
+		<Unit filename="src/modules/xine/factory.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/xine/filter_deinterlace.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/xine/vf_yadif_template.h" />
+		<Unit filename="src/modules/xine/xineutils.h" />
+		<Unit filename="src/modules/xine/yadif.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/xine/yadif.h" />
+		<Unit filename="src/modules/xml/common.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/xml/common.h" />
+		<Unit filename="src/modules/xml/consumer_xml.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/xml/factory.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/xml/filter_gpstext.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/xml/gps_parser.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/modules/xml/gps_parser.h" />
+		<Unit filename="src/modules/xml/producer_xml.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/swig/java/Play.java" />
+		<Unit filename="src/tests/test_animation/test_animation.cpp" />
+		<Unit filename="src/tests/test_audio/test_audio.cpp" />
+		<Unit filename="src/tests/test_events/test_events.cpp" />
+		<Unit filename="src/tests/test_filter/test_filter.cpp" />
+		<Unit filename="src/tests/test_frame/test_frame.cpp" />
+		<Unit filename="src/tests/test_image/test_image.cpp" />
+		<Unit filename="src/tests/test_playlist/test_playlist.cpp" />
+		<Unit filename="src/tests/test_producer/test_producer.cpp" />
+		<Unit filename="src/tests/test_properties/test_properties.cpp" />
+		<Unit filename="src/tests/test_repository/test_repository.cpp" />
+		<Unit filename="src/tests/test_service/test_service.cpp" />
+		<Unit filename="src/tests/test_tractor/test_tractor.cpp" />
+		<Unit filename="src/tests/test_xml/test_xml.cpp" />
+		<Unit filename="src/win32/fnmatch.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/win32/fnmatch.h" />
+		<Unit filename="src/win32/strptime.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/win32/win32.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Extensions />
+	</Project>
+</CodeBlocks_project_file>

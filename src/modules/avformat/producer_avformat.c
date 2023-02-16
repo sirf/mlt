@@ -1231,10 +1231,12 @@ static int seek_video( producer_avformat self, mlt_position position,
 	int paused = 0;
 	int seek_threshold = mlt_properties_get_int( properties, "seek_threshold" );
 	if ( seek_threshold <= 0 ) seek_threshold = 12;
+	// intra only -> always seek to exactly where we need to be
+	int intra_only = self->video_codec->codec_descriptor->props & AV_CODEC_PROP_INTRA_ONLY;
 
 	pthread_mutex_lock( &self->packets_mutex );
 
-	if ( self->video_seekable && ( position != self->video_expected || self->last_position < 0 ) )
+	if ( self->video_seekable && (( position != self->video_expected || self->last_position < 0 ) || intra_only) )
 	{
 
 		// Fetch the video format context
@@ -1252,7 +1254,7 @@ static int seek_video( producer_avformat self, mlt_position position,
 			// We're paused - use last image
 			paused = 1;
 		}
-		else if ( position < self->video_expected || position - self->video_expected >= seek_threshold || self->last_position < 0 )
+		else if ( position < self->video_expected || position - self->video_expected >= seek_threshold || self->last_position < 0 || intra_only )
 		{
 			// Calculate the timestamp for the requested frame
 			int64_t timestamp = req_position / ( av_q2d( self->video_time_base ) * source_fps );
@@ -2306,6 +2308,12 @@ static int video_codec_init( producer_avformat self, int index, mlt_properties p
 
 		skip_hwaccel:
 #endif
+
+		// Process properties as AVOptions
+		apply_properties( codec_context, properties, AV_OPT_FLAG_VIDEO_PARAM | AV_OPT_FLAG_DECODING_PARAM );
+		if ( codec && codec->priv_class && codec_context->priv_data )
+			apply_properties( codec_context->priv_data, properties, AV_OPT_FLAG_VIDEO_PARAM | AV_OPT_FLAG_DECODING_PARAM );
+
 		// If we don't have a codec and we can't initialise it, we can't do much more...
 		pthread_mutex_lock( &self->open_mutex );
 		if ( codec && avcodec_open2( codec_context, codec, NULL ) >= 0 )
@@ -2334,10 +2342,6 @@ static int video_codec_init( producer_avformat self, int index, mlt_properties p
 		}
 		pthread_mutex_unlock( &self->open_mutex );
 
-		// Process properties as AVOptions
-		apply_properties( codec_context, properties, AV_OPT_FLAG_VIDEO_PARAM | AV_OPT_FLAG_DECODING_PARAM );
-		if ( codec && codec->priv_class && codec_context->priv_data )
-			apply_properties( codec_context->priv_data, properties, AV_OPT_FLAG_VIDEO_PARAM | AV_OPT_FLAG_DECODING_PARAM );
 
 		// Reset some image properties
 		mlt_properties_set_int( properties, "width", codec_params->width );
@@ -3093,6 +3097,11 @@ static int audio_codec_init( producer_avformat self, int index, mlt_properties p
 			return 0;
 		}
 
+		// Process properties as AVOptions
+		apply_properties( codec_context, properties, AV_OPT_FLAG_AUDIO_PARAM | AV_OPT_FLAG_DECODING_PARAM );
+		if ( codec && codec->priv_class && codec_context->priv_data )
+			apply_properties( codec_context->priv_data, properties, AV_OPT_FLAG_AUDIO_PARAM | AV_OPT_FLAG_DECODING_PARAM );
+
 		// If we don't have a codec and we can't initialise it, we can't do much more...
 		pthread_mutex_lock( &self->open_mutex );
 		if ( codec && avcodec_open2( codec_context, codec, NULL ) >= 0 )
@@ -3109,11 +3118,6 @@ static int audio_codec_init( producer_avformat self, int index, mlt_properties p
 			self->audio_index = -1;
 		}
 		pthread_mutex_unlock( &self->open_mutex );
-
-		// Process properties as AVOptions
-		apply_properties( codec_context, properties, AV_OPT_FLAG_AUDIO_PARAM | AV_OPT_FLAG_DECODING_PARAM );
-		if ( codec && codec->priv_class && codec_context->priv_data )
-			apply_properties( codec_context->priv_data, properties, AV_OPT_FLAG_AUDIO_PARAM | AV_OPT_FLAG_DECODING_PARAM );
 	}
 	return self->audio_codec[ index ] && self->audio_index > -1;
 }

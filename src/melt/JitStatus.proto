@@ -1,0 +1,38 @@
+syntax = "proto2";
+
+message JitStatus {
+    optional int64 duration = 1;
+    optional double frame_rate = 2;
+    optional bool playing = 3;
+    optional int32 play_rate = 4;
+    optional int64 position = 5;
+    optional int32 total_channels = 6;
+    optional MediaInfo media_info = 7;
+}
+
+message MediaInfo {
+    repeated Stream streams = 1;
+}
+
+message Stream {
+    optional StreamType type = 1;
+    optional AudioStream audio = 2;
+    optional VideoStream video = 3;
+}
+
+message AudioStream {
+    optional int32 channels = 1;
+    optional string language = 2;
+}
+
+message VideoStream {
+    optional double frame_rate = 1;
+    optional int32 width = 2;
+    optional int32 height = 3;
+}
+
+enum StreamType {
+    UNKNOWN = 0;
+    AUDIO = 1;
+    VIDEO = 2;
+}
