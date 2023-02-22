@@ -1012,7 +1012,7 @@ int main( int argc, char **argv )
 	const char* repo_path = NULL;
 	int is_consumer_explicit = 0;
 	int is_setlocale = 0;
-	int status_fifo = 1;
+	int status_fifo = 0;
 
 	// Handle abnormal exit situations.
 	signal( SIGSEGV, abnormal_exit_handler );
@@ -1166,9 +1166,9 @@ query_all:
 		{
 			is_consumer_explicit = 1;
 		}
-		else if ( !strcmp( argv[ i ], "-disable-status-fifo" ) )
+		else if ( !strcmp( argv[ i ], "-enable-status-fifo" ) )
 		{
-			status_fifo = 0;
+			status_fifo = 1;
 		}
 	}
 
