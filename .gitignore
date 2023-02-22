@@ -57,3 +57,5 @@ out/
 src/modules/qt/mltqt_autogen/
 src/modules/glaxnimate/mltglaxnimate_autogen/
 mlt.layout
+mlt.cbp
+mlt.depend
