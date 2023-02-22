@@ -3,7 +3,7 @@
  * \brief link service class
  * \see mlt_chain_s
  *
- * Copyright (C) 2020-2022 Meltytech, LLC
+ * Copyright (C) 2020-2023 Meltytech, LLC
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -124,9 +124,17 @@ void mlt_chain_set_source( mlt_chain self, mlt_producer source )
 		base->source = source;
 		mlt_properties_inc_ref( source_properties );
 
-		// Save the native source producer profile
-		base->source_profile = mlt_profile_init(NULL);
-		mlt_profile_from_producer( base->source_profile, base->source );
+		// Save the native source producer frame rate
+		base->source_profile = mlt_profile_clone(mlt_service_profile(MLT_CHAIN_SERVICE(self)));
+		mlt_frame frame = NULL;
+		mlt_service_get_frame(MLT_PRODUCER_SERVICE(source), &frame, 0);
+		mlt_frame_close(frame);
+		if (mlt_properties_get_int(source_properties, "meta.media.frame_rate_num") > 0 &&
+		    mlt_properties_get_int(source_properties, "meta.media.frame_rate_den") > 0)
+		{
+			base->source_profile->frame_rate_num = mlt_properties_get_int(source_properties, "meta.media.frame_rate_num");
+			base->source_profile->frame_rate_den = mlt_properties_get_int(source_properties, "meta.media.frame_rate_den");
+		}
 
 		// Create a list of all parameters used by the source producer so that
 		// they can be passed between the source producer and this chain.

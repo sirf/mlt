@@ -135,6 +135,7 @@ struct producer_avformat_s
 	AVFilterContext* vfilter_out;
 #endif
 	int autorotate;
+	double rotation;
 	int is_audio_synchronizing;
 	int video_send_result;
 #if USE_HWACCEL
@@ -680,9 +681,10 @@ static mlt_image_format pick_image_format( enum AVPixelFormat pix_fmt , int full
 			case AV_PIX_FMT_BAYER_RGGB16LE:
 				return mlt_image_rgb;
 			default:
-				return mlt_image_yuv422;
+			    current_format = mlt_image_yuv422;
 		}
-	} else if (pix_fmt == AV_PIX_FMT_BAYER_RGGB16LE
+	}
+	if (pix_fmt == AV_PIX_FMT_BAYER_RGGB16LE
 		  ||  (pix_fmt == AV_PIX_FMT_YUV420P10LE && full_range)) {
 		return mlt_image_rgb;
 	}
@@ -839,13 +841,22 @@ static int setup_filters(producer_avformat self)
 	int error = 0;
 	mlt_properties properties = MLT_PRODUCER_PROPERTIES( self->parent );
 	const char *filtergraph = mlt_properties_get(properties, "filtergraph");
+	double theta = 0;
+
+	if(self->video_index != -1 && self->autorotate) {
+		theta = get_rotation(properties, self->video_format->streams[self->video_index]);
+		if (self->vfilter_graph && theta != self->rotation) {
+			// The rotation has changed. Force the filter graph to be rebuilt
+			avfilter_graph_free(&self->vfilter_graph);
+			self->vfilter_out = NULL;
+			self->rotation = theta;
+		}
+	}
 
 	if (!self->vfilter_graph && (self->autorotate || filtergraph) && self->video_index != -1) {
 		AVFilterContext *last_filter = NULL;
 		if (self->autorotate) {
 			mlt_properties properties = MLT_PRODUCER_PROPERTIES(self->parent);
-			double theta  = get_rotation(properties, self->video_format->streams[self->video_index]);
-
 			if (fabs(theta - 90) < 1.0) {
 				error = ( setup_video_filters(self) < 0 );
 				last_filter = self->vfilter_out;
@@ -892,6 +903,29 @@ static int setup_filters(producer_avformat self)
 	return error;
 }
 #endif
+
+static void set_up_discard( producer_avformat self, int audio_index, int video_index )
+{
+	// The open_mutex must be locked when this function is called
+	for ( int x = 0; x < self->audio_format->nb_streams; x++ )
+	{
+		if ( audio_index == INT_MAX || x == audio_index || (self->audio_format == self->video_format && x == video_index) )
+			self->audio_format->streams[x]->discard = AVDISCARD_DEFAULT;
+		else
+			self->audio_format->streams[x]->discard = AVDISCARD_ALL;
+	}
+
+	if ( self->audio_format != self->video_format )
+	{
+		for ( int x = 0; x < self->video_format->nb_streams; x++ )
+		{
+			if ( x == video_index )
+				self->video_format->streams[x]->discard = AVDISCARD_DEFAULT;
+			else
+				self->video_format->streams[x]->discard = AVDISCARD_ALL;
+		}
+	}
+}
 
 /** Open the file.
 */
@@ -1049,24 +1083,6 @@ static int producer_open(producer_avformat self, mlt_profile profile, const char
 					error = setup_filters(self);
 				}
 #endif
-			}
-
-			// set up discard
-			if (self->video_format) {
-				for (unsigned x = 0; x < self->video_format->nb_streams; x++) {
-					self->video_format->streams[x]->discard = AVDISCARD_ALL;
-				}
-				self->video_format->streams[self->video_index]->discard = AVDISCARD_DEFAULT;
-			}
-
-			if (self->audio_format) {
-				// don't overwrite the discard we just set if audio_format == video_format
-				if (self->audio_format != self->video_format) {
-					for (unsigned x = 0; x < self->audio_format->nb_streams; x++) {
-						self->audio_format->streams[x]->discard = AVDISCARD_ALL;
-					}
-				}
-				self->audio_format->streams[self->audio_index]->discard = AVDISCARD_DEFAULT;
 			}
 		}
 	}
@@ -1648,25 +1664,16 @@ static void set_image_size( producer_avformat self, int *width, int *height )
 	if (self->vfilter_out) {
 		*width = av_buffersink_get_w(self->vfilter_out);
 		*height = av_buffersink_get_h(self->vfilter_out);
-	}
-#else
-	double dar = mlt_profile_dar( mlt_service_profile( MLT_PRODUCER_SERVICE(self->parent) ) );
-	double theta  = self->autorotate? get_rotation( MLT_PRODUCER_PROPERTIES(self->parent), self->video_format->streams[self->video_index] ) : 0.0;
-	if ( fabs(theta - 90.0) < 1.0 || fabs(theta - 270.0) < 1.0 )
-	{
-		*height = self->video_codec->width;
-		// Workaround 1088 encodings missing cropping info.
-		if ( self->video_codec->height == 1088 && dar == 16.0/9.0 )
-			*width = 1080;
-		else
-			*width = self->video_codec->height;
 	} else {
-		*width = self->video_codec->width;
-		// Workaround 1088 encodings missing cropping info.
-		if ( self->video_codec->height == 1088 && dar == 16.0/9.0 )
-			*height = 1080;
-		else
-			*height = self->video_codec->height;
+#endif
+	double dar = mlt_profile_dar( mlt_service_profile( MLT_PRODUCER_SERVICE(self->parent) ) );
+	*width = self->video_codec->width;
+	// Workaround 1088 encodings missing cropping info.
+	if ( self->video_codec->height == 1088 && dar == 16.0/9.0 )
+		*height = 1080;
+	else
+		*height = self->video_codec->height;
+#ifdef AVFILTER
 	}
 #endif
 }
@@ -1769,6 +1776,15 @@ static int producer_get_image( mlt_frame frame, uint8_t **buffer, mlt_image_form
 	pthread_mutex_lock( &self->video_mutex );
 	mlt_service_lock( MLT_PRODUCER_SERVICE( producer ) );
 	mlt_log_timings_begin();
+
+#ifdef AVFILTER
+	if (self->autorotate && self->video_index != -1 && get_rotation(properties, self->video_format->streams[self->video_index]) != self->rotation) {
+		// Rotation has changed. Clear any cached frames.
+		mlt_cache_close(self->image_cache);
+		self->image_cache = NULL;
+		av_frame_free( &self->video_frame );
+	}
+#endif
 
 	// Fetch the video format context
 	AVFormatContext *context = self->video_format;
@@ -2536,6 +2552,7 @@ static void producer_set_up_video( producer_avformat self, mlt_frame frame )
 		if ( self->video_codec )
 			avcodec_close( self->video_codec );
 		self->video_codec = NULL;
+		set_up_discard( self, self->audio_index, index );
 		pthread_mutex_unlock( &self->open_mutex );
 	}
 
@@ -3187,6 +3204,7 @@ static void producer_set_up_audio( producer_avformat self, mlt_frame frame )
 				self->audio_codec[i] = NULL;
 			}
 		}
+		set_up_discard( self, index, self->video_index );
 		pthread_mutex_unlock( &self->open_mutex );
 	}
 
