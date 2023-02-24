@@ -1,3 +1,15 @@
+add_custom_command(
+    OUTPUT JitControl.pb-c.c
+    COMMAND protoc-c --c_out=. JitControl.proto
+    DEPENDS JitControl.proto
+)
+
+add_custom_command(
+    OUTPUT JitStatus.pb-c.c
+    COMMAND protoc-c --c_out=. JitStatus.proto
+    DEPENDS JitStatus.proto
+)
+
 add_executable(melt melt.c io.c io.h JitControl.pb-c.c JitStatus.pb-c.c)
 
 target_compile_options(melt PRIVATE ${MLT_COMPILE_OPTIONS})

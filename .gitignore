@@ -59,3 +59,7 @@ src/modules/glaxnimate/mltglaxnimate_autogen/
 mlt.layout
 mlt.cbp
 mlt.depend
+src/melt/JitControl.pb-c.c
+src/melt/JitControl.pb-c.h
+src/melt/JitStatus.pb-c.c
+src/melt/JitStatus.pb-c.h
