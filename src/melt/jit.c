@@ -5,7 +5,6 @@
 #include <sys/un.h>
 #include <fcntl.h>
 
-#include "jit.h"
 #include "JitControl.pb-c.h"
 #include "JitStatus.pb-c.h"
 
