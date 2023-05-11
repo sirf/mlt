@@ -1,11 +1,11 @@
 add_custom_command(
-    OUTPUT JitControl.pb-c.c
+    OUTPUT JitControl.pb-c.c JitControl.pb-c.h
     COMMAND protoc-c --c_out=. JitControl.proto
     DEPENDS JitControl.proto
 )
 
 add_custom_command(
-    OUTPUT JitStatus.pb-c.c
+    OUTPUT JitStatus.pb-c.c JitStatus.pb-c.h
     COMMAND protoc-c --c_out=. JitStatus.proto
     DEPENDS JitStatus.proto
 )
