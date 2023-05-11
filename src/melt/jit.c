@@ -99,7 +99,7 @@ static JitControl *read_control() {
 		exit(1);
 	}
 	fprintf(stderr, "time to unpack!\n");
-	return jit_control__unpack(NULL, sizeof buf, buf);
+	return jit_control__unpack(NULL, r, buf);
 }
 
 static void write_status(JitStatus *const jit_status) {
@@ -120,8 +120,8 @@ static void write_status(JitStatus *const jit_status) {
         buf_len = len;
     }
 
-    jit_status__pack(jit_status, buf);
 	if (client_sun_len > 0) {
+		jit_status__pack(jit_status, buf);
 		if (sendto(jit_status_fd, buf, len, 0, (struct sockaddr*) &client_sun, client_sun_len) != len) {
 			perror("sendto");
 			exit(1);
