@@ -87,10 +87,7 @@ static JitControl *read_control() {
 	setsockopt(jit_status_fd, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof timeout);
 	const ssize_t r = recvfrom(jit_status_fd, buf, sizeof buf, 0, (struct sockaddr*) &sun, &len);
 	if (r < 1) {
-		if (r < 1) {
-			perror("recvfrom");
-			exit(1);
-		}
+		perror("recvfrom");
 		return NULL;
 	} else if (r == sizeof buf) {
 		fprintf(stderr, "read buffer overflow\n");
