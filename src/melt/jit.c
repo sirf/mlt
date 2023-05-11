@@ -12,8 +12,8 @@ static JitStatus jit_status = JIT_STATUS__INIT;
 static int jit_status_fd = -1;
 static double fps_multiplier;
 
-static struct sockaddr_un client_sun;
-static socklen_t client_sun_len = 0;
+static struct sockaddr_un client_addr;
+static socklen_t client_addr_len = 0;
 
 
 static void jit_action( mlt_producer producer, char *value )
@@ -82,15 +82,12 @@ static JitControl *read_control() {
 	struct timeval timeout;
 	timeout.tv_sec = 1;
 	timeout.tv_usec = 0;
-	fprintf(stderr, "will read yo\n");
 	if (select(jit_status_fd + 1, &set, NULL, NULL, &timeout) <= 0) {
-		fprintf(stderr, "no deal\n");
 		return NULL;
 	}
-	fprintf(stderr, "yaaay!\n");
 
-	client_sun_len = sizeof client_sun;
-	const ssize_t r = recvfrom(jit_status_fd, buf, sizeof buf, 0, (struct sockaddr*) &client_sun, &client_sun_len);
+	client_addr_len = sizeof client_addr;
+	const ssize_t r = recvfrom(jit_status_fd, buf, sizeof buf, 0, (struct sockaddr*) &client_addr, &client_addr_len);
 	if (r < 1) {
 		perror("read");
 		exit(1);
@@ -98,7 +95,6 @@ static JitControl *read_control() {
 		fprintf(stderr, "read buffer overflow\n");
 		exit(1);
 	}
-	fprintf(stderr, "time to unpack!\n");
 	return jit_control__unpack(NULL, r, buf);
 }
 
@@ -120,9 +116,9 @@ static void write_status(JitStatus *const jit_status) {
         buf_len = len;
     }
 
-	if (client_sun_len > 0) {
+	if (client_addr_len > 0) {
 		jit_status__pack(jit_status, buf);
-		if (sendto(jit_status_fd, buf, len, 0, (struct sockaddr*) &client_sun, client_sun_len) != len) {
+		if (sendto(jit_status_fd, buf, len, 0, (struct sockaddr*) &client_addr, client_addr_len) != len) {
 			perror("sendto");
 			exit(1);
     	}
@@ -152,14 +148,13 @@ static void open_status_pipe(void) {
 		exit(2);
 	}
 
-	struct sockaddr_un sun;
-	memset(&sun, 0, sizeof sun);
-	sun.sun_family = AF_UNIX;
-	snprintf(sun.sun_path, sizeof sun, "/tmp/jit-status-%lld", (long long) getppid());
-	fprintf(stdout, "Creating status socket: %s\n", sun.sun_path);
+	memset(&client_addr, 0, sizeof client_addr);
+	client_addr.sun_family = AF_UNIX;
+	snprintf(client_addr.sun_path, sizeof client_addr, "/tmp/jit-status-%lld", (long long) getppid());
+	fprintf(stdout, "Creating status socket: %s\n", client_addr.sun_path);
 	fflush(stdout);
 
-	if (bind(jit_status_fd, (struct sockaddr*) &sun, sizeof sun) < 0) {
+	if (bind(jit_status_fd, (struct sockaddr*) &client_addr, sizeof client_addr) < 0) {
 		perror("bind");
     	exit(2);
   	}
