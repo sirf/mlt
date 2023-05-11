@@ -307,7 +307,6 @@ static void transport( mlt_producer producer, mlt_consumer consumer )
 		{
 			JitControl *const jit_control = read_control();
 			if (jit_control) {
-				fprintf(stderr, "korv!\n");
 				transport_action( producer, (char*) jit_control );
 				jit_control__free_unpacked(jit_control, NULL);
 			}
