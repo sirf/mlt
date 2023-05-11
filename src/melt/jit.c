@@ -78,9 +78,12 @@ static JitControl *read_control() {
 	struct timeval timeout;
 	timeout.tv_sec = 1;
 	timeout.tv_usec = 0;
+	fprintf(stderr, "will read yo\n");
 	if (select(STDIN_FILENO + 1, &set, NULL, NULL, &timeout) <= 0) {
+		fprintf(stderr, "no deal\n");
 		return NULL;
 	}
+	fprintf(stderr, "yaaay!\n");
 	const ssize_t r = read(jit_status_fd, buf, sizeof buf);
 	if (r < 1) {
 		perror("read");
@@ -151,7 +154,7 @@ static void open_status_pipe(void) {
 		perror("connect");
 		exit(2);
 	}
-	fprintf(stdout, "Status pipe opened\n");
+	fprintf(stdout, "Status socket opened\n");
 	fflush(stdout);
 }
 
