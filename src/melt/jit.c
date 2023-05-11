@@ -71,29 +71,25 @@ static void jit_action( mlt_producer producer, char *value )
 }
 
 static JitControl *read_control() {
-	static char *buf = NULL;
-	static int buf_len = 0;
-
-	int len;
-	if (read(STDIN_FILENO, &len, 4) != 4) {
-		exit(3);
+	static char buf[1 * 1024 * 1024]; // 1 MB
+	fd_set set;
+	FD_ZERO(&set);
+	FD_SET(STDIN_FILENO, &set);
+	struct timeval timeout;
+	timeout.tv_sec = 1;
+	timeout.tv_usec = 0;
+	if (select(STDIN_FILENO + 1, &set, NULL, NULL, &timeout) <= 0) {
+		return NULL;
 	}
-	if (buf_len < len) {
-		buf = realloc(buf, len);
-		if (!buf) {
-			exit(4);
-		}
-		buf_len = len;
+	const ssize_t r = read(jit_status_fd, buf, sizeof buf);
+	if (r < 1) {
+		perror("read");
+		exit(1);
+	} else if (r == sizeof buf) {
+		fprintf(stderr, "read buffer overflow\n");
+		exit(1);
 	}
-
-	for (int i = 0; i < len; ) {
-		const int r = read(STDIN_FILENO, buf + i, len - i);
-		if (r < 1) {
-			exit(5);
-		}
-		i += r;
-	}
-	return jit_control__unpack(NULL, len, buf);
+	return jit_control__unpack(NULL, sizeof buf, buf);
 }
 
 static void write_status(JitStatus *const jit_status) {

@@ -283,8 +283,6 @@ static void transport( mlt_producer producer, mlt_consumer consumer )
 	struct timespec tm = { 0, 40000000 };
 	int total_length = mlt_producer_get_playtime( producer );
 	int last_position = 0;
-	fd_set set;
-	struct timeval timeout;
 	int sel;
 
 	if ( mlt_properties_get_int( properties, "done" ) == 0 && !mlt_consumer_is_stopped( consumer ) )
@@ -307,16 +305,10 @@ static void transport( mlt_producer producer, mlt_consumer consumer )
 
 		while( mlt_properties_get_int( properties, "done" ) == 0 && !mlt_consumer_is_stopped( consumer ) )
 		{
-			FD_ZERO(&set);
-			FD_SET(STDIN_FILENO, &set);
-			timeout.tv_sec = 1;
-			timeout.tv_usec = 0;
-			if (select(STDIN_FILENO + 1, &set, NULL, NULL, &timeout) > 0) {
-				JitControl *const jit_control = read_control();
-				if (jit_control) {
-					transport_action( producer, (char*) jit_control );
-					jit_control__free_unpacked(jit_control, NULL);
-				}
+			JitControl *const jit_control = read_control();
+			if (jit_control) {
+				transport_action( producer, (char*) jit_control );
+				jit_control__free_unpacked(jit_control, NULL);
 			}
 
 #if defined(SDL_MAJOR_VERSION)
