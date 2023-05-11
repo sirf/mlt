@@ -12,6 +12,10 @@ static JitStatus jit_status = JIT_STATUS__INIT;
 static int jit_status_fd = -1;
 static double fps_multiplier;
 
+static struct sockaddr_un client_sun;
+static socklen_t client_sun_len = 0;
+
+
 static void jit_action( mlt_producer producer, char *value )
 {
 	mlt_properties properties = MLT_PRODUCER_PROPERTIES( producer );
@@ -84,7 +88,9 @@ static JitControl *read_control() {
 		return NULL;
 	}
 	fprintf(stderr, "yaaay!\n");
-	const ssize_t r = read(jit_status_fd, buf, sizeof buf);
+
+	client_sun_len = sizeof client_sun;
+	const ssize_t r = recvfrom(jit_status_fd, buf, sizeof buf, 0, (struct sockaddr*) &client_sun, &client_sun_len);
 	if (r < 1) {
 		perror("read");
 		exit(1);
@@ -92,6 +98,7 @@ static JitControl *read_control() {
 		fprintf(stderr, "read buffer overflow\n");
 		exit(1);
 	}
+	fprintf(stderr, "time to unpack!\n");
 	return jit_control__unpack(NULL, sizeof buf, buf);
 }
 
@@ -114,10 +121,12 @@ static void write_status(JitStatus *const jit_status) {
     }
 
     jit_status__pack(jit_status, buf);
-	if (write(jit_status_fd, buf, len) != len) {
-		perror("write");
-		exit(1);
-    }
+	if (client_sun_len > 0) {
+		if (sendto(jit_status_fd, buf, len, 0, (struct sockaddr*) &client_sun, client_sun_len) != len) {
+			perror("sendto");
+			exit(1);
+    	}
+	}
 }
 
 static mlt_producer find_producer_avformat(mlt_producer p) {
@@ -146,15 +155,15 @@ static void open_status_pipe(void) {
 	struct sockaddr_un sun;
 	memset(&sun, 0, sizeof sun);
 	sun.sun_family = AF_UNIX;
-	sprintf(sun.sun_path, "/tmp/jit-status-%lld", (long long) getppid());
-	fprintf(stdout, "Opening status socket: %s\n", sun.sun_path);
+	snprintf(sun.sun_path, sizeof sun, "/tmp/jit-status-%lld", (long long) getppid());
+	fprintf(stdout, "Creating status socket: %s\n", sun.sun_path);
 	fflush(stdout);
 
-	if (connect(jit_status_fd, (struct sockaddr *) &sun, sizeof sun) < 0) {
-		perror("connect");
-		exit(2);
-	}
-	fprintf(stdout, "Status socket opened\n");
+	if (bind(jit_status_fd, (struct sockaddr*) &sun, sizeof sun) < 0) {
+		perror("bind");
+    	exit(2);
+  	}
+	fprintf(stdout, "Status socket created\n");
 	fflush(stdout);
 }
 
