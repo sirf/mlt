@@ -72,23 +72,22 @@ static void jit_action( mlt_producer producer, char *value )
 
 static JitControl *read_control() {
 	static char buf[1 * 1024 * 1024]; // 1 MB
-
-	struct sockaddr_un sun;
-	memset(&sun, 0, sizeof sun);
-	sun.sun_family = AF_UNIX;
-	sprintf(sun.sun_path, "/tmp/jit-status-%lld", (long long) getppid());
-	socklen_t len = sizeof sun;
-
+	fd_set set;
+	FD_ZERO(&set);
+	FD_SET(jit_status_fd, &set);
 	struct timeval timeout;
 	timeout.tv_sec = 1;
 	timeout.tv_usec = 0;
-
 	fprintf(stderr, "will read yo\n");
-	setsockopt(jit_status_fd, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof timeout);
-	const ssize_t r = recvfrom(jit_status_fd, buf, sizeof buf, 0, (struct sockaddr*) &sun, &len);
-	if (r < 1) {
-		perror("recvfrom");
+	if (select(jit_status_fd + 1, &set, NULL, NULL, &timeout) <= 0) {
+		fprintf(stderr, "no deal\n");
 		return NULL;
+	}
+	fprintf(stderr, "yaaay!\n");
+	const ssize_t r = read(jit_status_fd, buf, sizeof buf);
+	if (r < 1) {
+		perror("read");
+		exit(1);
 	} else if (r == sizeof buf) {
 		fprintf(stderr, "read buffer overflow\n");
 		exit(1);
