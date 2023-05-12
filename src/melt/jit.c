@@ -9,11 +9,11 @@
 #include "JitStatus.pb-c.h"
 
 static JitStatus jit_status = JIT_STATUS__INIT;
-static int jit_status_fd = -1;
 static double fps_multiplier;
 
-static struct sockaddr_un client_addr;
-static socklen_t client_addr_len = 0;
+static int melt_sock_fd = -1; // UNIX domain socket for melt/jit messaging
+static struct sockaddr_un jit_sock_addr; // last known socket address of jit
+static socklen_t jit_sock_addr_len = 0;
 
 
 static void jit_action( mlt_producer producer, char *value )
@@ -78,16 +78,16 @@ static JitControl *read_control() {
 	static char buf[1 * 1024 * 1024]; // 1 MB
 	fd_set set;
 	FD_ZERO(&set);
-	FD_SET(jit_status_fd, &set);
+	FD_SET(melt_sock_fd, &set);
 	struct timeval timeout;
 	timeout.tv_sec = 1;
 	timeout.tv_usec = 0;
-	if (select(jit_status_fd + 1, &set, NULL, NULL, &timeout) <= 0) {
+	if (select(melt_sock_fd + 1, &set, NULL, NULL, &timeout) <= 0) {
 		return NULL;
 	}
 
-	client_addr_len = sizeof client_addr;
-	const ssize_t r = recvfrom(jit_status_fd, buf, sizeof buf, 0, (struct sockaddr*) &client_addr, &client_addr_len);
+	jit_sock_addr_len = sizeof jit_sock_addr;
+	const ssize_t r = recvfrom(melt_sock_fd, buf, sizeof buf, 0, (struct sockaddr*) &jit_sock_addr, &jit_sock_addr_len);
 	if (r < 1) {
 		perror("read");
 		exit(1);
@@ -102,7 +102,7 @@ static void write_status(JitStatus *const jit_status) {
     static char *buf = NULL;
     static int buf_len = 0;
 
-    if (jit_status_fd < 0) {
+    if (melt_sock_fd < 0) {
         return;
     }
 
@@ -116,9 +116,9 @@ static void write_status(JitStatus *const jit_status) {
         buf_len = len;
     }
 
-	if (client_addr_len > 0) {
+	if (jit_sock_addr_len > 0) {
 		jit_status__pack(jit_status, buf);
-		if (sendto(jit_status_fd, buf, len, 0, (struct sockaddr*) &client_addr, client_addr_len) != len) {
+		if (sendto(melt_sock_fd, buf, len, 0, (struct sockaddr*) &jit_sock_addr, jit_sock_addr_len) != len) {
 			perror("sendto");
 			exit(1);
     	}
@@ -142,19 +142,19 @@ static void dump_properties(mlt_properties p) {
 }
 
 static void open_status_pipe(void) {
-	jit_status_fd = socket(AF_UNIX, SOCK_DGRAM, 0);
-	if (jit_status_fd < 0) {
+	melt_sock_fd = socket(AF_UNIX, SOCK_DGRAM, 0);
+	if (melt_sock_fd < 0) {
 		perror("socket");
 		exit(2);
 	}
 
-	memset(&client_addr, 0, sizeof client_addr);
-	client_addr.sun_family = AF_UNIX;
-	snprintf(client_addr.sun_path, sizeof client_addr, "/tmp/jit-status-%lld", (long long) getppid());
-	fprintf(stdout, "Creating status socket: %s\n", client_addr.sun_path);
+	memset(&jit_sock_addr, 0, sizeof jit_sock_addr);
+	jit_sock_addr.sun_family = AF_UNIX;
+	snprintf(jit_sock_addr.sun_path, sizeof jit_sock_addr, "/tmp/melt-sock-%lld", (long long) getppid());
+	fprintf(stdout, "Creating status socket: %s\n", jit_sock_addr.sun_path);
 	fflush(stdout);
 
-	if (bind(jit_status_fd, (struct sockaddr*) &client_addr, sizeof client_addr) < 0) {
+	if (bind(melt_sock_fd, (struct sockaddr*) &jit_sock_addr, sizeof jit_sock_addr) < 0) {
 		perror("bind");
     	exit(2);
   	}
