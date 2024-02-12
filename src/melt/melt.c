@@ -67,6 +67,10 @@ static void fire_jack_seek_event(mlt_properties jack, int position)
 
 static void transport_action( mlt_producer producer, char *value )
 {
+	if (!(producer && value)) {
+		return;
+	}
+
 	mlt_properties properties = MLT_PRODUCER_PROPERTIES( producer );
 	mlt_multitrack multitrack = mlt_properties_get_data( properties, "multitrack", NULL );
 	mlt_consumer consumer = mlt_properties_get_data( properties, "transport_consumer", NULL );
