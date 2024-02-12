@@ -82,7 +82,7 @@ static JitControl *read_control() {
 	struct timeval timeout;
 	timeout.tv_sec = 1;
 	timeout.tv_usec = 0;
-	if (select(melt_sock_fd + 1, &set, NULL, NULL, &timeout) <= 0) {
+	if (melt_sock_fd < 0 || select(melt_sock_fd + 1, &set, NULL, NULL, &timeout) <= 0) {
 		return NULL;
 	}
 
@@ -102,7 +102,7 @@ static void write_status(JitStatus *const jit_status) {
     static char *buf = NULL;
     static int buf_len = 0;
 
-    if (melt_sock_fd < 0) {
+    if (melt_sock_fd < 0 || jit_sock_addr_len <= 0) {
         return;
     }
 
@@ -116,12 +116,10 @@ static void write_status(JitStatus *const jit_status) {
         buf_len = len;
     }
 
-	if (jit_sock_addr_len > 0) {
-		jit_status__pack(jit_status, buf);
-		if (sendto(melt_sock_fd, buf, len, 0, (struct sockaddr*) &jit_sock_addr, jit_sock_addr_len) != len) {
-			perror("sendto");
-			exit(1);
-    	}
+	jit_status__pack(jit_status, buf);
+	if (sendto(melt_sock_fd, buf, len, 0, (struct sockaddr*) &jit_sock_addr, jit_sock_addr_len) != len) {
+		perror("sendto");
+		exit(1);
 	}
 }
 
