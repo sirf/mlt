@@ -13,4 +13,5 @@ enum ControlType {
     QUIT = 3;
     SEEK = 4;
     SEEK_REL = 5;
+    KEEP_ALIVE = 6;
 }
