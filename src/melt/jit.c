@@ -19,7 +19,6 @@ static socklen_t jit_sock_addr_len = 0;
 static void jit_action( mlt_producer producer, char *value )
 {
 	mlt_properties properties = MLT_PRODUCER_PROPERTIES( producer );
-	mlt_multitrack multitrack = mlt_properties_get_data( properties, "multitrack", NULL );
 	mlt_consumer consumer = mlt_properties_get_data( properties, "transport_consumer", NULL );
 	mlt_properties jack = mlt_properties_get_data( MLT_CONSUMER_PROPERTIES( consumer ), "jack_filter", NULL );
 
@@ -75,7 +74,7 @@ static void jit_action( mlt_producer producer, char *value )
 }
 
 static JitControl *read_control() {
-	static char buf[1 * 1024 * 1024]; // 1 MB
+	static uint8_t buf[1 * 1024 * 1024]; // 1 MB
 	fd_set set;
 	FD_ZERO(&set);
 	FD_SET(melt_sock_fd, &set);
@@ -99,7 +98,7 @@ static JitControl *read_control() {
 }
 
 static void write_status(JitStatus *const jit_status) {
-    static char *buf = NULL;
+    static uint8_t *buf = NULL;
     static int buf_len = 0;
 
     if (melt_sock_fd < 0 || jit_sock_addr_len <= 0) {
@@ -128,15 +127,7 @@ static mlt_producer find_producer_avformat(mlt_producer p) {
 	mlt_tractor tractor = (mlt_tractor) p;
 	mlt_multitrack multitrack = mlt_tractor_multitrack(tractor);
 	mlt_playlist playlist = (mlt_playlist) mlt_multitrack_track(multitrack, 0);
-	mlt_producer clip = mlt_playlist_get_clip(playlist, 0);
 	return mlt_properties_get_data(MLT_PRODUCER_PROPERTIES(mlt_playlist_get_clip(playlist, 0)), "_cut_parent", NULL);
-}
-
-static void dump_properties(mlt_properties p) {
-	for (int i = 0; i < mlt_properties_count(p); i++) {
-		char *name = mlt_properties_get_name(p, i);
-		printf("%s\n", name);
-	}
 }
 
 static void open_status_pipe(void) {

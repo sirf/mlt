@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.14)
 
 project(MLT
-  VERSION 7.13.0
+  VERSION 7.25.0
   DESCRIPTION "Multimedia Framework"
   HOMEPAGE_URL "https://www.mltframework.org"
   LANGUAGES C CXX
@@ -11,6 +11,7 @@ option(GPL "Enable GPLv2 components" ON)
 option(GPL3 "Enable GPLv3 components" ON)
 option(BUILD_TESTING "Enable tests" OFF)
 option(BUILD_DOCS "Enable Doxygen documentation" OFF)
+option(CLANG_FORMAT "Enable Clang Format" ON)
 option(BUILD_TESTS_WITH_QT6 "Build test against Qt 6" OFF)
 
 option(MOD_AVFORMAT "Enable avformat module" ON)
@@ -36,6 +37,7 @@ option(MOD_RUBBERBAND "Enable Rubberband module (GPL)" ON)
 option(MOD_SDL1 "Enable SDL1 module" ON)
 option(MOD_SDL2 "Enable SDL2 module" ON)
 option(MOD_SOX "Enable SoX module" ON)
+option(MOD_SPATIALAUDIO "Enable SpatialAudio module" ON)
 option(MOD_VIDSTAB "Enable vid.stab module (GPL)" ON)
 option(MOD_VORBIS "Enable Vorbis module" ON)
 option(MOD_XINE "Enable XINE module (GPL)" ON)
@@ -142,6 +144,16 @@ if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
     set(CPU_X86_64 ON)
   endif()
 endif()
+
+if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_BUILD_TYPE STREQUAL "Debug")
+  # Treat warnings as errors with some exceptions
+  set(GCC_FLAGS "-Wall -Werror -Wno-deprecated-declarations")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${GCC_FLAGS} -Wno-class-memaccess -Wno-array-compare -Wno-unused-result -Wno-maybe-uninitialized")
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${GCC_FLAGS} -Wno-discarded-qualifiers")
+  # The following showed up in GCC 14, which I am using via msys2 on Windows.
+  # Remove the following when Glaxnimate is fixed.
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-c++20-compat -Wno-dangling-reference")
+endif ()
 
 if(MSVC)
   list(APPEND MLT_COMPILE_OPTIONS "$<$<CONFIG:Release>:/fp:fast>")
@@ -299,7 +311,7 @@ endif()
 
 
 if(MOD_GLAXNIMATE_QT6)
-  find_package(Qt6 COMPONENTS Core Gui Widgets Xml)
+  find_package(Qt6 COMPONENTS Core Gui Network Widgets Xml)
   if(Qt6_FOUND)
     list(APPEND MLT_SUPPORTED_COMPONENTS glaxnimate-qt6)
   else()
@@ -329,7 +341,7 @@ if(MOD_QT)
 endif()
 
 if(MOD_GLAXNIMATE)
-  find_package(Qt5 COMPONENTS Core Gui Widgets Xml)
+  find_package(Qt5 COMPONENTS Core Gui Network Widgets Xml)
   if(Qt5_FOUND)
     list(APPEND MLT_SUPPORTED_COMPONENTS glaxnimate)
   else()
@@ -387,6 +399,15 @@ if(MOD_SOX)
     list(APPEND MLT_SUPPORTED_COMPONENTS sox)
   else()
     set(MOD_SOX OFF)
+  endif()
+endif()
+
+if(MOD_SPATIALAUDIO)
+  pkg_check_modules(spatialaudio IMPORTED_TARGET spatialaudio)
+  if(TARGET PkgConfig::spatialaudio)
+    list(APPEND MLT_SUPPORTED_COMPONENTS spatialaudio)
+  else()
+    set(MOD_SPATIALAUDIO OFF)
   endif()
 endif()
 
@@ -488,6 +509,53 @@ if(BUILD_DOCS)
   doxygen_add_docs(docs src/framework)
 endif()
 
+if(CLANG_FORMAT)
+  # Formatting may change with different versions of clang-format.
+  # Test new versions before changing the allowed version here to avoid
+  # accidental broad changes to formatting.
+  find_package(ClangFormat 14 EXACT)
+  if(CLANGFORMAT_FOUND)
+    file(GLOB_RECURSE FORMAT_FILES "src/*.h" "src/*.c" "src/*.cpp")
+    # exclude 3rd party source from format checking
+    list(FILTER FORMAT_FILES EXCLUDE REGEX "/.*/glaxnimate/glaxnimate/")
+    list(FILTER FORMAT_FILES EXCLUDE REGEX "/.*autogen")
+    list(FILTER FORMAT_FILES EXCLUDE REGEX "/.*/avformat/mmx.h")
+    list(FILTER FORMAT_FILES EXCLUDE REGEX "/.*/decklink/darwin")
+    list(FILTER FORMAT_FILES EXCLUDE REGEX "/.*/decklink/linux")
+    list(FILTER FORMAT_FILES EXCLUDE REGEX "/.*/decklink/win")
+    list(FILTER FORMAT_FILES EXCLUDE REGEX "/.*/gdk/pixops")
+    list(FILTER FORMAT_FILES EXCLUDE REGEX "/.*/jackrack/jack_rack.*")
+    list(FILTER FORMAT_FILES EXCLUDE REGEX "/.*/jackrack/lock_free_fifo.*")
+    list(FILTER FORMAT_FILES EXCLUDE REGEX "/.*/plugin_desc.*")
+    list(FILTER FORMAT_FILES EXCLUDE REGEX "/.*/plugin_mgr.*")
+    list(FILTER FORMAT_FILES EXCLUDE REGEX "/.*/plugin_settings.*")
+    list(FILTER FORMAT_FILES EXCLUDE REGEX "/.*/plugin.*")
+    list(FILTER FORMAT_FILES EXCLUDE REGEX "/.*/process.*")
+    list(FILTER FORMAT_FILES EXCLUDE REGEX "/.*/plus/ebur128")
+    list(FILTER FORMAT_FILES EXCLUDE REGEX "/.*/movit/optional_effect.h")
+    list(FILTER FORMAT_FILES EXCLUDE REGEX "/.*/opencv/filter_opencv_tracker.cpp")
+    list(FILTER FORMAT_FILES EXCLUDE REGEX "/.*/plusgpl/cJSON")
+    list(FILTER FORMAT_FILES EXCLUDE REGEX "/.*/plusgpl/image.*")
+    list(FILTER FORMAT_FILES EXCLUDE REGEX "/.*/plusgpl/utils.*")
+    list(FILTER FORMAT_FILES EXCLUDE REGEX "/.*/rtaudio/RtAudio.*")
+    list(FILTER FORMAT_FILES EXCLUDE REGEX "/.*/xine/attributes.h")
+    list(FILTER FORMAT_FILES EXCLUDE REGEX "/.*/xine/cpu_accel.c")
+    list(FILTER FORMAT_FILES EXCLUDE REGEX "/.*/xine/deinterlace.*")
+    list(FILTER FORMAT_FILES EXCLUDE REGEX "/.*/xine/vf_yadif_template.h")
+    list(FILTER FORMAT_FILES EXCLUDE REGEX "/.*/xine/xineutils.h")
+    list(FILTER FORMAT_FILES EXCLUDE REGEX "/.*/xine/yadif.*")
+    list(FILTER FORMAT_FILES EXCLUDE REGEX "/.*/win32")
+    add_custom_target(clang-format COMMAND
+      ${CLANGFORMAT_EXECUTABLE} -style=file -i ${FORMAT_FILES}
+    )
+    add_custom_target(clang-format-check COMMAND
+      ${CLANGFORMAT_EXECUTABLE} --dry-run --Werror -style=file -i ${FORMAT_FILES}
+    )
+  else()
+    set(CLANG_FORMAT OFF)
+  endif()
+endif()
+
 install(DIRECTORY presets profiles DESTINATION ${MLT_INSTALL_DATA_DIR})
 
 if(UNIX AND NOT APPLE)
@@ -526,6 +594,7 @@ add_feature_info("GPLv2" GPL "")
 add_feature_info("GPLv3" GPL3 "")
 add_feature_info("Tests" BUILD_TESTING "")
 add_feature_info("Doxygen" BUILD_DOCS "")
+add_feature_info("Clang Format" CLANG_FORMAT "")
 add_feature_info("Module: avformat" MOD_AVFORMAT "")
 add_feature_info("Module: DeckLink" MOD_DECKLINK "")
 add_feature_info("Module: Frei0r" MOD_FREI0R "")
@@ -549,6 +618,7 @@ add_feature_info("Module: Rubberband" MOD_RUBBERBAND "")
 add_feature_info("Module: SDL1" MOD_SDL1 "")
 add_feature_info("Module: SDL2" MOD_SDL2 "")
 add_feature_info("Module: SoX" MOD_SOX "")
+add_feature_info("Module: SpatialAudio" MOD_SPATIALAUDIO "")
 add_feature_info("Module: vid.stab" MOD_VIDSTAB "")
 add_feature_info("Module: Vorbis" MOD_VORBIS "")
 add_feature_info("Module: XINE" MOD_XINE "")
