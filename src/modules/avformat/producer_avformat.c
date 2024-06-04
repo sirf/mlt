@@ -1340,11 +1340,10 @@ static int seek_video(producer_avformat self,
     int seek_threshold = mlt_properties_get_int(properties, "seek_threshold");
     if (seek_threshold <= 0)
         seek_threshold = 64;
-    int intra_only = self->video_codec->codec_descriptor->props & AV_CODEC_PROP_INTRA_ONLY;
 
     pthread_mutex_lock(&self->packets_mutex);
 
-    if (self->video_seekable && ((position != self->video_expected || self->last_position < 0) || intra_only) ) {
+    if (self->video_seekable && (position != self->video_expected || self->last_position < 0)) {
         // Fetch the video format context
         AVFormatContext *context = self->video_format;
 
@@ -1362,8 +1361,7 @@ static int seek_video(producer_avformat self,
             paused = 1;
         } else if (position < self->video_expected
                    || position - self->video_expected >= seek_threshold
-                   || self->last_position < 0
-                   || intra_only) {
+                   || self->last_position < 0) {
             // Calculate the timestamp for the requested frame
             int64_t timestamp = av_rescale_q_rnd(
                 req_position,
