@@ -1,8 +1,8 @@
-schema_version: 0.1
+schema_version: 7.0
 type: producer
 identifier: count
 title: Count
-version: 1
+version: 2
 copyright: Meltytech, LLC
 license: LGPLv2.1
 language: en
