@@ -1,6 +1,6 @@
 /*
  * consumer_avformat.c -- an encoder based on avformat
- * Copyright (C) 2003-2023 Meltytech, LLC
+ * Copyright (C) 2003-2024 Meltytech, LLC
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -720,7 +720,12 @@ static AVStream *add_audio_stream(mlt_consumer consumer,
                                   const AVCodec *codec,
                                   AVCodecContext **codec_context,
                                   int channels,
-                                  int64_t channel_layout)
+#if HAVE_FFMPEG_CH_LAYOUT
+                                  AVChannelLayout *channel_layout
+#else
+                                  int64_t channel_layout
+#endif
+)
 {
     // Get the properties
     mlt_properties properties = MLT_CONSUMER_PROPERTIES(consumer);
@@ -740,7 +745,11 @@ static AVStream *add_audio_stream(mlt_consumer consumer,
         c->codec_id = codec->id;
         c->codec_type = AVMEDIA_TYPE_AUDIO;
         c->sample_fmt = pick_sample_fmt(properties, codec);
+#if HAVE_FFMPEG_CH_LAYOUT
+        av_channel_layout_copy(&c->ch_layout, channel_layout);
+#else
         c->channel_layout = channel_layout;
+#endif
 
 // disabled until some audio codecs are multi-threaded
 #if 0
@@ -766,13 +775,14 @@ static AVStream *add_audio_stream(mlt_consumer consumer,
         }
 
         // Process properties as AVOptions
-        char *apre = mlt_properties_get(properties, "apre");
+        // merge 338b5382433632c66e4b10c47264bd9e29330316: consumer_avformat: Dummy out apre and vpre stuff
+        /*char *apre = mlt_properties_get(properties, "apre");
         if (apre) {
             mlt_properties p = mlt_properties_load(apre);
             apply_properties(c, p, AV_OPT_FLAG_AUDIO_PARAM | AV_OPT_FLAG_ENCODING_PARAM);
             mlt_properties_close(p);
         }
-        apply_properties(c, properties, AV_OPT_FLAG_AUDIO_PARAM | AV_OPT_FLAG_ENCODING_PARAM);
+        apply_properties(c, properties, AV_OPT_FLAG_AUDIO_PARAM | AV_OPT_FLAG_ENCODING_PARAM);*/
 
         int audio_qscale = mlt_properties_get_int(properties, "aq");
         if (audio_qscale > QSCALE_NONE) {
@@ -783,7 +793,11 @@ static AVStream *add_audio_stream(mlt_consumer consumer,
         // Set parameters controlled by MLT
         c->sample_rate = mlt_properties_get_int(properties, "frequency");
         st->time_base = (AVRational){1, c->sample_rate};
+#if HAVE_FFMPEG_CH_LAYOUT
+        c->ch_layout.nb_channels = channels;
+#else
         c->channels = channels;
+#endif
 
         if (mlt_properties_get(properties, "alang") != NULL)
             av_dict_set(&oc->metadata, "language", mlt_properties_get(properties, "alang"), 0);
@@ -883,7 +897,8 @@ static AVStream *add_video_stream(mlt_consumer consumer,
             c->thread_count = thread_count;
 
         // Process properties as AVOptions
-        char *vpre = mlt_properties_get(properties, "vpre");
+        // merge 338b5382433632c66e4b10c47264bd9e29330316: consumer_avformat: Dummy out apre and vpre stuff
+        /*char *vpre = mlt_properties_get(properties, "vpre");
         if (vpre) {
             mlt_properties p = mlt_properties_load(vpre);
 #ifdef AVDATADIR
@@ -910,7 +925,7 @@ static AVStream *add_video_stream(mlt_consumer consumer,
 #endif
             apply_properties(c, p, AV_OPT_FLAG_VIDEO_PARAM | AV_OPT_FLAG_ENCODING_PARAM);
             mlt_properties_close(p);
-        }
+        }*/
         int colorspace = mlt_properties_get_int(properties, "colorspace");
         mlt_properties_set(properties, "colorspace", NULL);
         apply_properties(c, properties, AV_OPT_FLAG_VIDEO_PARAM | AV_OPT_FLAG_ENCODING_PARAM);
@@ -1134,7 +1149,8 @@ static int open_video(mlt_properties properties,
 {
     // Process properties as AVOptions on the AVCodec
     if (codec && codec->priv_class) {
-        char *vpre = mlt_properties_get(properties, "vpre");
+        // merge 338b5382433632c66e4b10c47264bd9e29330316: consumer_avformat: Dummy out apre and vpre stuff
+        /*char *vpre = mlt_properties_get(properties, "vpre");
         if (vpre) {
             mlt_properties p = mlt_properties_load(vpre);
             apply_properties(video_enc->priv_data,
@@ -1144,7 +1160,7 @@ static int open_video(mlt_properties properties,
         }
         apply_properties(video_enc->priv_data,
                          properties,
-                         AV_OPT_FLAG_VIDEO_PARAM | AV_OPT_FLAG_ENCODING_PARAM);
+                         AV_OPT_FLAG_VIDEO_PARAM | AV_OPT_FLAG_ENCODING_PARAM);*/
     }
 
     if (codec && codec->pix_fmts) {
@@ -1195,7 +1211,11 @@ typedef struct
     size_t size;
 } buffer_t;
 
+#if LIBAVFORMAT_VERSION_MAJOR >= 61
+static int mlt_write(void *h, const uint8_t *buf, int size)
+#else
 static int mlt_write(void *h, uint8_t *buf, int size)
+#endif
 {
     mlt_properties properties = (mlt_properties) h;
     buffer_t buffer = {buf, size};
@@ -1295,7 +1315,11 @@ static int encode_audio(encode_ctx_t *ctx)
             ctx->audio_avframe->pts = ctx->sample_count[i];
             ctx->sample_count[i] += ctx->audio_avframe->nb_samples;
             avcodec_fill_audio_frame(ctx->audio_avframe,
+#if HAVE_FFMPEG_CH_LAYOUT
+                                     codec->ch_layout.nb_channels,
+#else
                                      codec->channels,
+#endif
                                      codec->sample_fmt,
                                      (const uint8_t *) p,
                                      AUDIO_ENCODE_BUFFER_SIZE,
@@ -1371,7 +1395,11 @@ static int encode_audio(encode_ctx_t *ctx)
             ctx->audio_avframe->pts = ctx->sample_count[i];
             ctx->sample_count[i] += ctx->audio_avframe->nb_samples;
             avcodec_fill_audio_frame(ctx->audio_avframe,
+#if HAVE_FFMPEG_CH_LAYOUT
+                                     codec->ch_layout.nb_channels,
+#else
                                      codec->channels,
+#endif
                                      codec->sample_fmt,
                                      (const uint8_t *) ctx->audio_buf_2,
                                      AUDIO_ENCODE_BUFFER_SIZE,
@@ -1625,6 +1653,11 @@ static void *consumer_thread(void *arg)
     }
     if (enc_ctx->audio_codec_id != AV_CODEC_ID_NONE) {
         int is_multi = 0;
+#if HAVE_FFMPEG_CH_LAYOUT
+        AVChannelLayout ch_layout;
+#else
+        int64_t ch_layout;
+#endif
 
         enc_ctx->total_channels = 0;
         // multitrack audio
@@ -1634,12 +1667,24 @@ static void *consumer_thread(void *arg)
             if (j) {
                 is_multi = 1;
                 enc_ctx->total_channels += j;
+#if HAVE_FFMPEG_CH_LAYOUT
+                av_channel_layout_default(&ch_layout, j);
                 enc_ctx->audio_st[i] = add_audio_stream(consumer,
                                                         enc_ctx->oc,
                                                         audio_codec,
                                                         &enc_ctx->acodec_ctx[i],
                                                         j,
-                                                        av_get_default_channel_layout(j));
+                                                        &ch_layout);
+                av_channel_layout_uninit(&ch_layout);
+#else
+                ch_layout = av_get_default_channel_layout(j);
+                enc_ctx->audio_st[i] = add_audio_stream(consumer,
+                                                        enc_ctx->oc,
+                                                        audio_codec,
+                                                        &enc_ctx->acodec_ctx[i],
+                                                        j,
+                                                        ch_layout);
+#endif
             }
         }
         // single track
@@ -1650,12 +1695,24 @@ static void *consumer_thread(void *arg)
                 || mlt_audio_channel_layout_channels(layout) != enc_ctx->channels) {
                 layout = mlt_audio_channel_layout_default(enc_ctx->channels);
             }
+#if HAVE_FFMPEG_CH_LAYOUT
+            av_channel_layout_from_mask(&ch_layout, mlt_to_av_channel_layout(layout));
             enc_ctx->audio_st[0] = add_audio_stream(consumer,
                                                     enc_ctx->oc,
                                                     audio_codec,
                                                     &enc_ctx->acodec_ctx[0],
                                                     enc_ctx->channels,
-                                                    mlt_to_av_channel_layout(layout));
+                                                    &ch_layout);
+            av_channel_layout_uninit(&ch_layout);
+#else
+            ch_layout = mlt_to_av_channel_layout(layout);
+            enc_ctx->audio_st[0] = add_audio_stream(consumer,
+                                                    enc_ctx->oc,
+                                                    audio_codec,
+                                                    &enc_ctx->acodec_ctx[0],
+                                                    enc_ctx->channels,
+                                                    ch_layout);
+#endif
             enc_ctx->total_channels = enc_ctx->channels;
         }
     }
@@ -1780,8 +1837,12 @@ static void *consumer_thread(void *arg)
             AVCodecContext *c = enc_ctx->acodec_ctx[0];
             enc_ctx->audio_avframe->format = c->sample_fmt;
             enc_ctx->audio_avframe->nb_samples = enc_ctx->audio_input_frame_size;
+#if HAVE_FFMPEG_CH_LAYOUT
+            av_channel_layout_copy(&enc_ctx->audio_avframe->ch_layout, &c->ch_layout);
+#else
             enc_ctx->audio_avframe->channel_layout = c->channel_layout;
             enc_ctx->audio_avframe->channels = c->channels;
+#endif
         } else {
             mlt_log_error(MLT_CONSUMER_SERVICE(consumer), "failed to allocate audio AVFrame\n");
             mlt_events_fire(properties, "consumer-fatal-error", mlt_event_data_none());
@@ -1862,8 +1923,8 @@ static void *consumer_thread(void *arg)
                                             NULL);
                 }
                 if (pcm) {
-                    // Silence if not normal forward speed
-                    if (mlt_properties_get_double(frame_properties, "_speed") != 1.0)
+                    // Silence only if going backward
+                    if (mlt_properties_get_double(frame_properties, "_speed") < 0)
                         memset(pcm, 0, samples * enc_ctx->channels * enc_ctx->sample_bytes);
 
                     // Append the samples

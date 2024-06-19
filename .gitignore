@@ -63,4 +63,9 @@ src/modules/glaxnimate/mltglaxnimate-qt6_autogen/
 out
 src/swig/ruby/markdown/
 CMakeLists.txt.user
+mlt.kdev4
+src/melt/JitControl.pb-c.c
+src/melt/JitControl.pb-c.h
+src/melt/JitStatus.pb-c.c
+src/melt/JitStatus.pb-c.h
 

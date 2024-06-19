@@ -1,6 +1,6 @@
 /*
  * producer_glaxnimate.cpp -- a Glaxnimate/Qt based producer for MLT
- * Copyright (C) 2022-2023 Meltytech, LLC
+ * Copyright (C) 2022-2024 Meltytech, LLC
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -57,7 +57,7 @@ public:
     int duration() const
     {
         auto frames = composition()->animation->last_frame.get()
-                      - composition()->animation->first_frame.get() + 1.f;
+                      - composition()->animation->first_frame.get();
         return toMltFps(frames);
     }
 
@@ -86,7 +86,7 @@ public:
         auto pos = mlt_frame_original_position(frame);
         if (mlt_properties_get(properties(), "eof")
             && !::strcmp("loop", mlt_properties_get(properties(), "eof"))) {
-            pos %= duration();
+            pos %= duration() - 1;
         }
         auto bg = mlt_properties_get_color(properties(), "background");
         auto background = QColor(bg.r, bg.g, bg.b, bg.a);
@@ -140,12 +140,12 @@ static bool createQApplicationIfNeeded(mlt_service service)
                                          + QStringLiteral("/plugins"));
 #endif
 #if defined(Q_OS_UNIX) && !defined(Q_OS_MAC)
-        if (getenv("DISPLAY") == 0) {
-            mlt_log_error(
-                service,
-                "The MLT Qt module requires a X11 environment.\n"
-                "Please either run melt from an X session or use a fake X server like xvfb:\n"
-                "xvfb-run -a melt (...)\n");
+        if (getenv("DISPLAY") == 0 && getenv("WAYLAND_DISPLAY") == 0) {
+            mlt_log_error(service,
+                          "The MLT Glaxnimate module requires a X11 or Wayland environment.\n"
+                          "Please either run melt from a session with a display server or use a "
+                          "fake X server like xvfb:\n"
+                          "xvfb-run -a melt (...)\n");
             return false;
         }
 #endif

@@ -1,8 +1,20 @@
-add_executable(melt melt.c io.c io.h)
+add_custom_command(
+    OUTPUT JitControl.pb-c.c JitControl.pb-c.h
+    COMMAND protoc-c --c_out=. JitControl.proto
+    DEPENDS JitControl.proto
+)
+
+add_custom_command(
+    OUTPUT JitStatus.pb-c.c JitStatus.pb-c.h
+    COMMAND protoc-c --c_out=. JitStatus.proto
+    DEPENDS JitStatus.proto
+)
+
+add_executable(melt melt.c io.c io.h JitControl.pb-c.c JitStatus.pb-c.c)
 
 target_compile_options(melt PRIVATE ${MLT_COMPILE_OPTIONS})
 
-target_link_libraries(melt PRIVATE mlt Threads::Threads)
+target_link_libraries(melt PRIVATE mlt Threads::Threads protobuf-c m)
 
 target_compile_definitions(melt PRIVATE VERSION="${MLT_VERSION}")
 

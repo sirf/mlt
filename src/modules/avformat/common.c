@@ -1,6 +1,6 @@
 /*
  * common.h
- * Copyright (C) 2018-2023 Meltytech, LLC
+ * Copyright (C) 2018-2024 Meltytech, LLC
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -156,9 +156,19 @@ int64_t mlt_to_av_channel_layout(mlt_channel_layout layout)
     return 0;
 }
 
+#if HAVE_FFMPEG_CH_LAYOUT
+mlt_channel_layout av_channel_layout_to_mlt(AVChannelLayout *layout)
+{
+    if (layout->order != AV_CHANNEL_ORDER_NATIVE && layout->order != AV_CHANNEL_ORDER_AMBISONIC) {
+        return mlt_channel_independent;
+    }
+    unsigned long layout_id = layout->u.mask;
+#else
 mlt_channel_layout av_channel_layout_to_mlt(int64_t layout)
 {
-    switch (layout) {
+    unsigned long layout_id = layout;
+#endif
+    switch (layout_id) {
     case 0:
         return mlt_channel_independent;
     case AV_CH_LAYOUT_MONO:
@@ -214,7 +224,7 @@ mlt_channel_layout av_channel_layout_to_mlt(int64_t layout)
     case AV_CH_LAYOUT_7POINT1_WIDE_BACK:
         return mlt_channel_7p1_wide_back;
     }
-    mlt_log_error(NULL, "[avformat] Unknown channel layout: %lu\n", (unsigned long) layout);
+    mlt_log_error(NULL, "[avformat] Unknown channel layout: %lu\n", layout_id);
     return mlt_channel_independent;
 }
 

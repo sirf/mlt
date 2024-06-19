@@ -1,6 +1,6 @@
 /*
  * melt.c -- MLT command line utility
- * Copyright (C) 2002-2023 Meltytech, LLC
+ * Copyright (C) 2002-2024 Meltytech, LLC
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -62,148 +62,19 @@ static void fire_jack_seek_event(mlt_properties jack, int position)
     mlt_events_fire(jack, "jack-seek", mlt_event_data_from_int(position));
 }
 
+#include "jit.c"
+
 static void transport_action(mlt_producer producer, char *value)
 {
+    if (!(producer && value)) {
+        return;
+    }
+
     mlt_properties properties = MLT_PRODUCER_PROPERTIES(producer);
-    mlt_multitrack multitrack = mlt_properties_get_data(properties, "multitrack", NULL);
-    mlt_consumer consumer = mlt_properties_get_data(properties, "transport_consumer", NULL);
-    mlt_properties jack = mlt_properties_get_data(MLT_CONSUMER_PROPERTIES(consumer),
-                                                  "jack_filter",
-                                                  NULL);
-    mlt_position position = producer ? mlt_producer_position(producer) : 0;
 
     mlt_properties_set_int(properties, "stats_off", 1);
 
-    if (strlen(value) == 1) {
-        switch (value[0]) {
-        case 'q':
-        case 'Q':
-            mlt_properties_set_int(properties, "done", 1);
-            mlt_events_fire(jack, "jack-stop", mlt_event_data_none());
-            break;
-        case '0':
-            position = 0;
-            mlt_producer_set_speed(producer, 1);
-            mlt_producer_seek(producer, position);
-            mlt_consumer_purge(consumer);
-            fire_jack_seek_event(jack, position);
-            break;
-        case '1':
-            mlt_producer_set_speed(producer, -10);
-            break;
-        case '2':
-            mlt_producer_set_speed(producer, -5);
-            break;
-        case '3':
-            mlt_producer_set_speed(producer, -2);
-            break;
-        case '4':
-            mlt_producer_set_speed(producer, -1);
-            break;
-        case '5':
-            mlt_producer_set_speed(producer, 0);
-            mlt_consumer_purge(consumer);
-            mlt_producer_seek(producer, mlt_consumer_position(consumer) + 1);
-            mlt_events_fire(jack, "jack-stop", mlt_event_data_none());
-            break;
-        case '6':
-        case ' ':
-            if (!jack || mlt_producer_get_speed(producer) != 0)
-                mlt_producer_set_speed(producer, 1);
-            mlt_consumer_purge(consumer);
-            mlt_events_fire(jack, "jack-start", mlt_event_data_none());
-            break;
-        case '7':
-            mlt_producer_set_speed(producer, 2);
-            break;
-        case '8':
-            mlt_producer_set_speed(producer, 5);
-            break;
-        case '9':
-            mlt_producer_set_speed(producer, 10);
-            break;
-        case 'd':
-            if (multitrack != NULL) {
-                int i = 0;
-                mlt_position last = -1;
-                fprintf(stderr, "\n");
-                for (i = 0; 1; i++) {
-                    position = mlt_multitrack_clip(multitrack, mlt_whence_relative_start, i);
-                    if (position == last)
-                        break;
-                    last = position;
-                    fprintf(stderr, "%d: %d\n", i, (int) position);
-                }
-            }
-            break;
-
-        case 'g':
-            if (multitrack != NULL) {
-                position = mlt_multitrack_clip(multitrack, mlt_whence_relative_current, 0);
-                mlt_producer_seek(producer, position);
-                mlt_consumer_purge(consumer);
-                fire_jack_seek_event(jack, position);
-            }
-            break;
-        case 'H':
-            if (producer != NULL) {
-                position -= mlt_producer_get_fps(producer) * 60;
-                mlt_consumer_purge(consumer);
-                mlt_producer_seek(producer, position);
-                fire_jack_seek_event(jack, position);
-            }
-            break;
-        case 'h':
-            if (producer != NULL) {
-                position--;
-                mlt_producer_set_speed(producer, 0);
-                mlt_consumer_purge(consumer);
-                mlt_producer_seek(producer, position);
-                mlt_events_fire(jack, "jack-stop", mlt_event_data_none());
-                fire_jack_seek_event(jack, position);
-            }
-            break;
-        case 'j':
-            if (multitrack != NULL) {
-                position = mlt_multitrack_clip(multitrack, mlt_whence_relative_current, 1);
-                mlt_consumer_purge(consumer);
-                mlt_producer_seek(producer, position);
-                fire_jack_seek_event(jack, position);
-            }
-            break;
-        case 'k':
-            if (multitrack != NULL) {
-                position = mlt_multitrack_clip(multitrack, mlt_whence_relative_current, -1);
-                mlt_consumer_purge(consumer);
-                mlt_producer_seek(producer, position);
-                fire_jack_seek_event(jack, position);
-            }
-            break;
-        case 'l':
-            if (producer != NULL) {
-                position++;
-                mlt_consumer_purge(consumer);
-                if (mlt_producer_get_speed(producer) != 0) {
-                    mlt_producer_set_speed(producer, 0);
-                    mlt_events_fire(jack, "jack-stop", mlt_event_data_none());
-                } else {
-                    mlt_producer_seek(producer, position);
-                    fire_jack_seek_event(jack, position);
-                }
-            }
-            break;
-        case 'L':
-            if (producer != NULL) {
-                position += mlt_producer_get_fps(producer) * 60;
-                mlt_consumer_purge(consumer);
-                mlt_producer_seek(producer, position);
-                fire_jack_seek_event(jack, position);
-            }
-            break;
-        }
-
-        mlt_properties_set_int(MLT_CONSUMER_PROPERTIES(consumer), "refresh", 1);
-    }
+    jit_action( producer, value );
 
     mlt_properties_set_int(properties, "stats_off", 0);
 }
@@ -411,46 +282,29 @@ static void transport(mlt_producer producer, mlt_consumer consumer)
     int progress = mlt_properties_get_int(MLT_CONSUMER_PROPERTIES(consumer), "progress");
     int is_getc = mlt_properties_get_int(MLT_CONSUMER_PROPERTIES(consumer), "melt_getc");
     struct timespec tm = {0, 40000000};
-    int total_length = mlt_producer_get_playtime(producer);
-    int last_position = 0;
 
     if (mlt_properties_get_int(properties, "done") == 0 && !mlt_consumer_is_stopped(consumer)) {
         if (!silent && !progress) {
             if (!is_getc)
                 term_init();
+        }
 
-            fprintf(stderr,
-                    "+-----+ +-----+ +-----+ +-----+ +-----+ +-----+ +-----+ +-----+ +-----+\n");
-            fprintf(stderr,
-                    "|1=-10| |2= -5| |3= -2| |4= -1| |5=  0| |6=  1| |7=  2| |8=  5| |9= 10|\n");
-            fprintf(stderr,
-                    "+-----+ +-----+ +-----+ +-----+ +-----+ +-----+ +-----+ +-----+ +-----+\n");
-
-            fprintf(stderr,
-                    "+---------------------------------------------------------------------+\n");
-            fprintf(stderr,
-                    "|               H = back 1 minute,  L = forward 1 minute              |\n");
-            fprintf(stderr,
-                    "|                 h = previous frame,  l = next frame                 |\n");
-            fprintf(stderr,
-                    "|           g = start of clip, j = next clip, k = previous clip       |\n");
-            fprintf(stderr,
-                    "|                0 = restart, q = quit, space = play                  |\n");
-            fprintf(stderr,
-                    "+---------------------------------------------------------------------+\n");
+        // frame rate multiplier
+        if (jit_status.has_frame_rate) {
+            const int num = mlt_properties_get_int(MLT_CONSUMER_PROPERTIES(consumer), "frame_rate_num");
+            const int den = mlt_properties_get_int(MLT_CONSUMER_PROPERTIES(consumer), "frame_rate_den");
+            fps_multiplier = num / (jit_status.frame_rate * den);
+            if (fps_multiplier != 1) {
+                fprintf(stderr, "fps_multiplier: %f\n", fps_multiplier);
+            }
         }
 
         while (mlt_properties_get_int(properties, "done") == 0
                && !mlt_consumer_is_stopped(consumer)) {
-            int value = (silent || progress || is_getc) ? -1 : term_read();
-            if (is_getc) {
-                value = getc(stdin);
-                value = (value == EOF) ? 'q' : value;
-            }
-
-            if (value != -1) {
-                char string[2] = {value, 0};
-                transport_action(producer, string);
+            JitControl *const jit_control = read_control();
+            if (jit_control) {
+                transport_action( producer, (char*) jit_control );
+                jit_control__free_unpacked(jit_control, NULL);
             }
 
 #if defined(SDL_MAJOR_VERSION)
@@ -458,22 +312,22 @@ static void transport(mlt_producer producer, mlt_consumer consumer)
 #endif
 
             if (!silent && mlt_properties_get_int(properties, "stats_off") == 0) {
-                if (progress) {
-                    int current_position = mlt_producer_position(producer);
-                    if (current_position > last_position) {
-                        fprintf(stderr,
-                                "Current Frame: %10d, percentage: %10d%c",
-                                current_position,
-                                100 * current_position / total_length,
-                                progress == 2 ? '\n' : '\r');
-                        last_position = current_position;
-                    }
-                } else {
-                    fprintf(stderr,
-                            "Current Position: %10d\r",
-                            (int) mlt_consumer_position(consumer));
+                jit_status.has_duration = 1;
+                jit_status.duration = llround(mlt_producer_get_length(producer) / fps_multiplier);
+                jit_status.has_play_rate = 1;
+                jit_status.play_rate = mlt_producer_get_speed(producer);
+                jit_status.has_position = 1;
+                jit_status.position = llround(mlt_producer_position(producer) / fps_multiplier);
+
+                if (jit_status.play_rate < 0 && jit_status.position == 0) {
+                    mlt_producer_set_speed( producer, 0 );
+                    mlt_consumer_purge( consumer );
+                    //mlt_producer_seek( producer, 0);
+                    jit_status.play_rate = 0;
+                    jit_status.position = 0;
                 }
-                fflush(stderr);
+
+                write_status(&jit_status);
             }
 
             if (silent || progress)
@@ -756,12 +610,14 @@ int main(int argc, char **argv)
     const char *repo_path = NULL;
     int is_consumer_explicit = 0;
     int is_setlocale = 0;
+    int status_fifo = 0;
 
     // Handle abnormal exit situations.
     signal(SIGSEGV, abnormal_exit_handler);
     signal(SIGILL, abnormal_exit_handler);
     signal(SIGABRT, abnormal_exit_handler);
 
+    fprintf(stdout, "Melt starting\n");
     for (i = 1; i < argc; i++) {
         if (!strcmp(argv[i], "-setlocale")) {
             is_setlocale = 1;
@@ -874,7 +730,7 @@ int main(int argc, char **argv)
         } else if (!strcmp(argv[i], "-version") || !strcmp(argv[i], "--version")) {
             fprintf(stdout,
                     "%s " VERSION "\n"
-                    "Copyright (C) 2002-2023 Meltytech, LLC\n"
+                    "Copyright (C) 2002-2024 Meltytech, LLC\n"
                     "<https://www.mltframework.org/>\n"
                     "This is free software; see the source for copying conditions.  There is NO\n"
                     "warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n",
@@ -891,8 +747,17 @@ int main(int argc, char **argv)
                 repo_path = argv[++i];
         } else if (!strcmp(argv[i], "-consumer")) {
             is_consumer_explicit = 1;
+        } else if (!strcmp( argv[ i ], "-enable-status-fifo" )) {
+            status_fifo = 1;
         }
     }
+
+    // Open status pipe
+    if (status_fifo)
+    {
+        open_status_pipe();
+    }
+
     if (!is_silent && !isatty(STDIN_FILENO) && !is_progress)
         is_progress = 1;
 
@@ -973,6 +838,13 @@ int main(int argc, char **argv)
             consumer = create_consumer(profile, NULL);
     }
 
+    // video is paused initially
+    jit_status.has_playing = 1;
+    jit_status.playing = status_fifo ? 0 : 1; // play automatically when status fifo is disabled
+
+    // media info
+    print_media_info();
+
     // Set transport properties on consumer and produder
     if (consumer != NULL && melt != NULL) {
         mlt_properties_set_data(MLT_CONSUMER_PROPERTIES(consumer),
@@ -1039,6 +911,10 @@ int main(int argc, char **argv)
                 mlt_producer_set_in_and_out(melt, in, out);
                 mlt_producer_seek(melt, 0);
             }
+
+            // smaller buffer -> faster pause
+            mlt_properties_set_int( properties, "buffer", 3 );
+
             // Connect consumer to melt
             mlt_consumer_connect(consumer, MLT_PRODUCER_SERVICE(melt));
 
@@ -1055,6 +931,12 @@ int main(int argc, char **argv)
                 signal(SIGHUP, stop_handler);
                 signal(SIGPIPE, stop_handler);
 #endif
+
+                // start in paused state?
+                if (!jit_status.playing) {
+                    mlt_producer_set_speed( melt, 0 );
+                    mlt_producer_seek( melt, 0 );
+                }
 
                 // Transport functionality
                 transport(melt, consumer);
